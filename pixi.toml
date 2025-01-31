@@ -15,13 +15,14 @@ numpy = "<2.0"
 ipython = "*"
 
 [pypi-dependencies]
+basilisp = "*"
+basilisp-blender = "*"
 bpy = "*"
 biotite = "*"
+databpy ="*"
 molecularnodes = { git = "https://github.com/BradyAJohnston/MolecularNodes.git" }
 opencv-python = "*"
 platformdirs = "*"
-basilisp = "*"
-basilisp-blender = "*"
 
 [tasks]
 # https://docs.blender.org/api/current/info_tips_and_tricks.html

@@ -1,7 +1,5 @@
 (ns molnodes-basilisp.main
   (:import bpy mathutils pathlib
-           [bpy.types :as types]
-           [bpy.props :as props]
            [molecularnodes.entities.molecule.molecule :as molecule]
            [molecularnodes.download :as download]
            [molecularnodes.blender  :as bl]
@@ -16,9 +14,21 @@
    [basilisp.string :as string]))
 
 
-
 (defn clear-all []
   #_TODO "To fully clear the screen")
+
+  ;; Remove Molecules and then the Cube
+(defn clear-objects []
+  (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
+    (when mol-collection
+      (doseq [obj (.. mol-collection -objects)]
+        (.. bpy -data -objects (remove obj ** :do_unlink true))))
+
+    (doseq [obj (.. bpy -data -objects)]
+      (when (and (= "MESH" (.-type obj))
+                 (not= "Camera" (.-name obj)))
+        (.. bpy -data -objects (remove obj ** :do_unlink true))))))
+
 
 (defn auto-set-camera []
   #_TODO "auto set the view")
@@ -52,6 +62,18 @@
         (set! (.-matrix_world camera) camera-matrix)
         (.-matrix_world camera)))))
 
+    ;; def centre_array(atom_array, centre):
+    ;;      if centre == "centroid":
+    ;;          atom_array.coord -= databpy.centre(atom_array.coord)
+    ;;      elif centre == "mass":
+    ;;          atom_array.coord -= databpy.centre(atom_array.coord, weight=atom_array.mass)
+
+    ;;  if centre in ["mass", "centroid"]:
+    ;;      if is_stack:
+    ;;          for atom_array in array:
+    ;;              centre_array(atom_array, centre)
+    ;;      else:
+    ;;          centre_array(atom_array, centre)
 
 ;; core loading function. used molnodes code + biotite bond connections.
 (defn load-pdb [code]
@@ -65,7 +87,7 @@
 
 
 (defn render! []
-   #_TODO "take a collection of states corresponding to frames and generate an output")
+  #_TODO "take a collection of states corresponding to frames and generate an output")
 
 
 (defn set-view! [matrix]
@@ -77,43 +99,38 @@
     (when (and area3d region3d camera)
       (set! (.. bpy -context -scene -camera -matrix_world) matrix)
       (set! (.-view_matrix region3d) (.inverted matrix)))))
-   
 
-(comment  
+
+(comment
   ;; move the view around and get the view
   ;; the move around and set it back
   (def mat01 (get-view))
   (set-view! mat01)
-  (defn filter-atom-name [stack, atomname]) 
+
+  ;; load a file
+  (def fap (load-pdb "1FAP"))
+
+
+  (defn paint-struct [mol]
+    (let [arr (.get_array mol 0)
+          bonds (bonds/connect_via_residue_names arr)
+          _ (set! (.-bonds arr) bonds)
+          [obj frames] (molecule/_create_object  arr ** :name "heyyo" :style "Style Cartoon")]
+
+      (println (.centroid obj))
+      (println (str "Center of Mass is " (.centroid obj)))
+
+      (bl_nodes/create_starting_node_tree obj ** :style "cartoon")))
+
+
+  (paint-struct fap)
+  (defn filter-atom-name [stack, atomname])
   (defn render! [stack])
 
-  
-   ;; it would be good to paint by color and material as well.
-   (defn paint-struct [mol]
-     (let [arr (.get_array pdb_struct 1)
-           bonds (bonds/connect_via_residue_names arr)
-           _ (set! (.-bonds arr) bonds)
-           [obj frames] (molecule/_create_object  arr ** :name "heyyo" :style "Style Cartoon")]
-       (bl_nodes/create_starting_node_tree obj ** :style "cartoon"))))
+  (clear-objects)
 
-  ;; ;; it would be good to paint by color and material as well.
-  ;; (defn load-mol []
-  ;;   (let [arr (.get_array pdb_struct 1)
-  ;;         bonds (bonds/connect_via_residue_names arr)
-  ;;         _ (set! (.-bonds arr) bonds)
-  ;;         [obj frames] (molecule/_create_object  arr ** :name "heyyo" :style "Style Cartoon")]
-  ;;     (bl_nodes/create_starting_node_tree obj ** :style "cartoon")))
+  (.get (.-collections (.-data bpy)) "Molecular Nodes")
 
-  ;; we need a get view fn
-  (paint-struct)
-  (molecule/create_object pdb_struct)
-  ; initialize the classes we ned to add additional Geom Nodes
-  (load-node-groups)
-  (load-pdb "1FAP")
-  (load-pdb "7VDV")
-  (center-object-on-origin! "7VDV")
-  (mol-by-name "1FAP")
-  (geom-node-by-name "1FAP")
-  ;; Example creation of cube and subnodes
-  (create-subdivided-cube)
-  )
+  (.. bpy -data -collections (get "Molecular Nodes"))
+
+)
