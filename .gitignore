@@ -1,4 +1,5 @@
 .pixi
+*.egg-info
 .calva/output-window/
 .classpath
 .clj-kondo/.cache

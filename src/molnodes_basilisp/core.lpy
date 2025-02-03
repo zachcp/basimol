@@ -140,28 +140,6 @@
 
  (comment
 
-
-   (defn create-simple-material [name]
-     (let [materials (.. bpy -data -materials)
-           material (.new materials name)]
-       (python/setattr material "use_nodes" true)
-       material))
-
-
- ;; move the view around and get the view
- ;; the move around and set it back
-   (def mat01 (get-view))
-   (set-view! (get-view))
-
-   (defn paint-struct [mol]
-     (let [arr (.get_array mol 0)
-           [obj _] (molecule/_create_object  arr ** :name "heyyo" :style "Style Cartoon")]
-       (bl_nodes/create_starting_node_tree obj ** :style "cartoon")))
-
-
- ;; load a file
-   (def fap (load-pdb "1FAP"))
-
    
 ;; styles_mapping = {
 ;;     "preset_1": "Style Preset 1",
@@ -182,16 +160,6 @@
 ;;     "density_surface": "Style Density Surface",
 ;;     "density_wire": "Style Density Wire",
 ;; }
-
-   (let [style "surface"
-         molname (str (gensym))
-         [obj _] (molecule/_create_object  fap ** :name molname :style style)]
-     (bl_nodes/create_starting_node_tree obj ** :style style))
-
-   (defn has-material-input? [node]
-     (some #(= (.-name %) "Material") (vec (.-inputs node))))
-
-
   ;; style is one of the options above
   ;; pre filter the array. only array allowed not AtomStacks
   ;;
@@ -220,6 +188,24 @@
    (set! (.-diffuse_color material) [1 0 0 1])
    (render-atomarray arr style material))
 
+ 
+   (defn create-simple-material [name]
+     (let [materials (.. bpy -data -materials)
+           material (.new materials name)]
+       (python/setattr material "use_nodes" true)
+       material))
+   
+   
+    ;; move the view around and get the view
+    ;; the move around and set it back
+   (def mat01 (get-view))
+   (set-view! (get-view))
+   
+   
+    ;; load a file
+   (def fap (load-pdb "1FAP"))
+
+   
  (set-view! (get-view))
  (clear-objects)
 
