@@ -1,9 +1,7 @@
-;; import pytest
-;; import molnodes_basilisp.core
-
 (ns molnodes_basilisp.test-core
-  (:require [basilisp.test :refer [deftest is are testing]]))
-
+  (:require [basilisp.test :refer [deftest is are testing]]
+            [molnodes-basilisp.core :as mol]
+            ))
 
 (deftest my-test
   (is true)
@@ -16,3 +14,11 @@
     3  1 2
     4  2 2
     0 -1 1))
+
+
+;; (deftest test-loading
+;;   (let [mol ()])
+;;   (are [res x y] (= res (+ x y))
+;;     3  1 2
+;;     4  2 2
+;;     0 -1 1))

@@ -16,6 +16,9 @@ dependencies = [
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/molnodes_basilisp"]
+
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -40,5 +43,6 @@ platformdirs = "*"
 [tool.pixi.tasks]
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
 repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+bootstrap = "basilisp bootstrap"
 test = "basilisp test"
 
