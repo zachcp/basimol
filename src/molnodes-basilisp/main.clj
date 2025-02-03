@@ -266,42 +266,43 @@
     (some #(= (.-name %) "Material") (vec (.-inputs node))))
 
 
-  ;; Top level selection 
-  (let [style "sticks"
-        molname (str (gensym))
-        filtered-structure (aget  fap 0 (filter-resid  fap 1))
-        [obj _] (molecule/_create_object  filtered-structure ** :name molname :style style)]
 
-    (let [genname (str (gensym))
-          material01 (.. bpy -data -materials (new genname))]
-      (set! (.-diffuse_color material01) [1 0 0 1])
+  ;; style is one of the opbtions above
+  ;; pre filter the array. only array allowed not AtomStacks
+  ;;
+  (defn render-atomarray [arr style material]
+    (let [molname (str (gensym))
+          [obj _] (molecule/_create_object  arr ** :name molname :style style)]
 
       ;; style creation is here.
       (bl_nodes/create_starting_node_tree obj ** :style style)
 
-        ;; Get the geometry nodes modifier
+      ;; Get the geometry nodes modifier
       (let [modifier (first (filter #(= (.-type %) "NODES")
                                     (vec (.-modifiers obj))))
             node-tree (.-node_group modifier)
             nodes (.-nodes node-tree)]
 
-    ;; Now you can find and modify nodes in the geometry nodes tree
-        (doseq [node (vec nodes)]
-          (println "Node:" (.-name node) "Type:" (.-bl_idname node)))
-
-    ;; Find specific nodes
+        ;; Find specific nodes
         (when-let [style-node (first (filter #(str/includes? (.-name %) "Style")
                                              (vec nodes)))]
-          ;; Modify the style node properties
-          (println "Found style node:" (.-name style-node))
-          (.. obj -data -materials (append material01))
-
+          ;; Modify the style node properties 
           (when-let [material-input (first (filter #(= (.-name %) "Material")
                                                    (.. style-node -inputs)))]
-          ;; Set the material in the node's Material input
-            (set! (.-default_value material-input) material01)))))) 
+              ;; Set the material in the node's Material input 
+            (.. obj -data -materials (append material)) 
+            (set! (.-default_value material-input) material))))))
+  
 
+  (let [arr (aget  fap 0 (filter-resid  fap 1))
+        style "sticks" 
+        genname (str (gensym))
+        material (.. bpy -data -materials (new genname))]
+    
+    (set! (.-diffuse_color material) [1 0 0 1])
+    (render-atomarray arr style material))
 
+  
   (let []
     (set! (.. bpy -context -scene -render -filepath)  "render.png")
     (.. bpy -ops -render (render ** :write_still true)))
