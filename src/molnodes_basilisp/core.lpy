@@ -1,4 +1,4 @@
-(ns molnodes_basilisp.main
+(ns molnodes_basilisp.core
    (:import bpy
             builtins
             databpy
@@ -140,7 +140,6 @@
 
  (comment
 
-   
 ;; styles_mapping = {
 ;;     "preset_1": "Style Preset 1",
 ;;     "preset_2": "Style Preset 2",

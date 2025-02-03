@@ -4,7 +4,14 @@ version = "0.1.0"
 description = "Evaling Molecular Nodes in Blender"
 authors = [{name = "Zachary Charlop-Powers", email = "zach.charlop.powers@gmail.com"}]
 requires-python = ">= 3.11"
-dependencies = []
+dependencies = [
+    "basilisp",
+    "basilisp-blender",
+    "biotite",
+    "bpy",
+    "databpy",
+    "molecularnodes"
+]
 
 [build-system]
 build-backend = "hatchling.build"
@@ -16,6 +23,7 @@ platforms = ["osx-arm64"]
 
 [tool.pixi.dependencies]
 python = "==3.11"
+pip = "*"
 ffmpeg-python = "*"
 ffmpeg = "*"
 opencv = "*"
@@ -24,17 +32,12 @@ ipython = "*"
 
 [tool.pixi.pypi-dependencies]
 molnodes_basilisp = { path = ".", editable = true }
-basilisp = "*"
-basilisp-blender = "*"
-bpy = "*"
-biotite = "*"
-databpy ="*"
-molecularnodes = { git = "https://github.com/BradyAJohnston/MolecularNodes.git" }
 opencv-python = "*"
 platformdirs = "*"
-pytest = "*"
+
 
 [tool.pixi.tasks]
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
 repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
 test = "pytest"
+
