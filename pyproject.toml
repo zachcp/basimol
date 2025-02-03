@@ -29,6 +29,7 @@ ffmpeg = "*"
 opencv = "*"
 numpy = "<2.0"
 ipython = "*"
+pytest = "*"
 
 [tool.pixi.pypi-dependencies]
 molnodes_basilisp = { path = ".", editable = true }
@@ -39,5 +40,5 @@ platformdirs = "*"
 [tool.pixi.tasks]
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
 repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
-test = "pytest"
+test = "basilisp test"
 
