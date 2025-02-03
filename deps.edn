@@ -1,7 +1,7 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases
- {:run-m {:main-opts ["-m" "molnodes_basilisp.main"]}
+ {:run-m {:main-opts ["-m" "molnodes_basilisp.core"]}
   :run-x {:ns-default molnodes_basilisp.main
           :exec-fn greet
           :exec-args {:name "Clojure"}}

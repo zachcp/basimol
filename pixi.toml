@@ -1,5 +1,5 @@
 [project]
-name = "molnodes-basilisp"
+name = "molnodes_basilisp"
 version = "0.1.0"
 description = "Evaling Molecular Nodes in Blender"
 authors = ["Zachary Charlop-Powers <zach.charlop.powers@gmail.com>"]
@@ -23,6 +23,7 @@ databpy ="*"
 molecularnodes = { git = "https://github.com/BradyAJohnston/MolecularNodes.git" }
 opencv-python = "*"
 platformdirs = "*"
+pytest = "*"  # fix
 
 [tasks]
 # https://docs.blender.org/api/current/info_tips_and_tricks.html
@@ -31,3 +32,5 @@ remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
 # Depending on your platform, you may need to explicitly reference the location of your Python installation using the PYTHONPATH environment variable, e.g:
 # launch-blender-basilisp = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python-expr \"from basilisp_blender.nrepl import server_start; shutdown_fn = server_start(port=8889);\""
 repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+
+test = "pytest"

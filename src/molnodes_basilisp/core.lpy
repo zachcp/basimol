@@ -1,4 +1,4 @@
-(ns molnodes-basilisp.main
+(ns molnodes_basilisp.main
    (:import bpy
             builtins
             databpy
@@ -12,7 +12,6 @@
             [biotite.structure :as struct]
             [biotite.structure.bonds :as bonds])
    (:require [basilisp.string :as str]))
-
 
 
  (defn auto-set-camera []
@@ -162,10 +161,8 @@
 
  ;; load a file
    (def fap (load-pdb "1FAP"))
-   fap
 
-
-
+   
 ;; styles_mapping = {
 ;;     "preset_1": "Style Preset 1",
 ;;     "preset_2": "Style Preset 2",
@@ -195,7 +192,6 @@
      (some #(= (.-name %) "Material") (vec (.-inputs node))))
 
 
-
   ;; style is one of the options above
   ;; pre filter the array. only array allowed not AtomStacks
   ;;
@@ -207,24 +203,22 @@
        (bl_nodes/create_starting_node_tree obj ** :style style)
 
       ;; Get the geometry nodes modifier
-       (when-let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+       (let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
                   node-tree (.-node_group modifier)
-                  nodes (.-nodes node-tree)
-                  style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
-         (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
-                  ;; Set the material in the node's Material input 
-           (.. obj -data -materials (append material))
-           (set! (.-default_value material-input) material))))))
+                  nodes (.-nodes node-tree)]
+         (when-let [  style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+           (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+                             ;; Set the material in the node's Material input 
+                (.. obj -data -materials (append material))
+                (set! (.-default_value material-input) material))))))
 
 
  (let [arr (aget  fap 0 (filter-resid  fap 1))
        style "sticks"
        genname (str (gensym))
        material (.. bpy -data -materials (new genname))]
-
    (set! (.-diffuse_color material) [1 0 0 1])
    (render-atomarray arr style material))
-
 
  (set-view! (get-view))
  (clear-objects)
