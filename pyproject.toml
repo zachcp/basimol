@@ -13,36 +13,10 @@ dependencies = [
     "molecularnodes"
 ]
 
+
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/molnodes_basilisp"]
-
-
-[tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["osx-arm64"]
-
-[tool.pixi.dependencies]
-python = "==3.11"
-pip = "*"
-ffmpeg-python = "*"
-ffmpeg = "*"
-opencv = "*"
-numpy = "<2.0"
-ipython = "*"
-pytest = "*"
-
-[tool.pixi.pypi-dependencies]
-molnodes_basilisp = { path = ".", editable = true }
-opencv-python = "*"
-platformdirs = "*"
-
-
-[tool.pixi.tasks]
-remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
-repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
-bootstrap = "basilisp bootstrap"
-test = "basilisp bootstrap && basilisp test --include-path tests/"
-

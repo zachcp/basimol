@@ -17,8 +17,6 @@
 
 
 ;; (deftest test-loading
-;;   (let [mol ()])
-;;   (are [res x y] (= res (+ x y))
-;;     3  1 2
-;;     4  2 2
-;;     0 -1 1))
+;;   (let [mol (mol/load-pdb "1FAP")]
+;;     ()
+;;     (assert (=  mol))))
