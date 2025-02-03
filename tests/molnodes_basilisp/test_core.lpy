@@ -1,6 +1,6 @@
 (ns molnodes_basilisp.test-core
   (:require [basilisp.test :refer [deftest is are testing]]
-            [molnodes-basilisp.core :as mol]
+            [molnodes_basilisp.core :as mol]
             ))
 
 (deftest my-test
