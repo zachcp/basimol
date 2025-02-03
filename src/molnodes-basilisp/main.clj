@@ -10,7 +10,9 @@
            [biotite.structure.io.pdbx :as pdbx]
            [biotite.structure.filter :as filter]
            [biotite.structure :as struct]
-           [biotite.structure.bonds :as bonds]))
+           [biotite.structure.bonds :as bonds])
+  (:require [basilisp.string :as str])
+  )
 
 
 
@@ -25,7 +27,8 @@
                          (databpy/centre (.-coord arr)))))
     (set! (.-coord atom-array)
           (np/subtract (.-coord atom-array)
-                       (databpy/centre (.-coord atom-array))))))
+                       (databpy/centre (.-coord atom-array)))))
+  atom-array)
 
 
  ;; Remove Molecules and then the Cube
@@ -102,8 +105,9 @@
 (defn load-pdb [code]
   ^struct/AtomArrayStack
   (let [stack (-> code download/download pdbx.CIFFile/read pdbx/get_structure)
-        _  (set! (.-bonds stack) (bonds/connect_via_residue_names stack))]
-    (center-array stack)))
+        _  (set! (.-bonds stack) (bonds/connect_via_residue_names stack))
+        stack2   (center-array stack)]
+    stack2))
 
 
 (defn render! []
@@ -123,33 +127,97 @@
 
 
 
-
 (comment
 
+  ;; (defn create-node
+  ;;   "Create a new node in a node tree"
+  ;;   [nodes type]
+  ;;   (.new nodes type))
 
-  (defn create-material
-    "Creates a basic material with the given name and properties
-   props is a map that can include:
-   :color [r g b a]
-   :metallic float
-   :roughness float"
-    [name {:keys [color metallic roughness]
+  ;; (defn set-location!
+  ;;   "Set the location of a node"
+  ;;   [node x y]
+  ;;   (python/setattr node "location" [x y]))
+
+  ;; (defn connect-nodes!
+  ;;   "Connect two nodes together"
+  ;;   [links from-node from-socket to-node to-socket]
+  ;;   (.new links
+  ;;         (.. from-node -outputs [from-socket])
+  ;;         (.. to-node -inputs [to-socket])))
+
+  ;; (defn set-node-input!
+  ;;   "Set a node input value"
+  ;;   [node input-name value]
+  ;;   (python/setattr
+  ;;    (.. node -inputs [input-name])
+  ;;    "default_value"
+  ;;    value))
+
+
+
+
+  (defn create-simple-material [name]
+    (let [materials (.. bpy -data -materials)
+          material (.new materials name)]
+      (python/setattr material "use_nodes" true)
+      material))
+
+  (defn create-pbr-material
+    "Create a PBR material with various properties"
+    [name {:keys [color metallic roughness emission subsurface transmission]
            :or {color [0.8 0.8 0.8 1.0]
                 metallic 0.0
-                roughness 0.5}}]
-    (let [material (.. bpy -data -materials (new "test"))
-          _ (set! (. material use_nodes) true)
+                roughness 0.5
+                emission [0 0 0 1]
+                subsurface 0.0
+                transmission 0.0}}]
+    (let [material (.. bpy -data -materials (new name))
+          _ (python/setattr material "use_nodes" true)
           nodes (.. material -node_tree -nodes)
-          principled (. nodes (get "Principled BSDF"))]
-      (set! (.. principled -inputs ["Base Color"] -default_value) color)
-      (set! (.. principled -inputs ["Metallic"] -default_value) metallic)
-      (set! (.. principled -inputs ["Roughness"] -default_value) roughness)
-      material))
+          links (.. material -node_tree -links)]
+
+      ;; Clear existing nodes
+      (.clear nodes)
+
+      ;; Create nodes
+      (let [principled (create-node nodes "ShaderNodeBsdfPrincipled")
+            output (create-node nodes "ShaderNodeOutputMaterial")]
+
+        ;; Set node locations
+        (set-location! principled 0 0)
+        (set-location! output 300 0)
+
+        ;; Set material properties
+        (set-node-input! principled "Base Color" color)
+        (set-node-input! principled "Metallic" metallic)
+        (set-node-input! principled "Roughness" roughness)
+        (set-node-input! principled "Emission" emission)
+        (set-node-input! principled "Subsurface" subsurface)
+        (set-node-input! principled "Transmission" transmission)
+
+        ;; Connect nodes
+        (connect-nodes! links principled "BSDF" output "Surface")
+
+        material)))
+
+  (let [genname (str (gensym))
+        material01 (.. bpy -data -materials (new genname))]
+
+    (set! (.-diffuse_color material01) [1 0 0 1])
+    material01)
+
+  (let [genname (str (gensym))
+        material01 (.. bpy -data -materials (new genname))]
+
+    (set! (.-diffuse_color material01) [1 0 0 1])
+    material01)
+
+
 
  ;; move the view around and get the view
  ;; the move around and set it back
   (def mat01 (get-view))
-
   (set-view! (get-view))
 
   (defn paint-struct [mol]
@@ -160,10 +228,11 @@
 
  ;; load a file
   (def fap (load-pdb "1FAP"))
+
+  fap
   (.get_annotation fap "res_id")
   (.get_annotation fap "res_name")
   (.get_annotation fap "res_name")
-
   ;; works on stack and on Array
   (filter/filter_amino_acids fap)
   (filter/filter_amino_acids (first (seq fap)))
@@ -187,20 +256,62 @@
 ;;     "density_surface": "Style Density Surface",
 ;;     "density_wire": "Style Density Wire",
 ;; }
+  
   (let [style "surface"
         molname (str (gensym))
         [obj _] (molecule/_create_object  fap ** :name molname :style style)]
     (bl_nodes/create_starting_node_tree obj ** :style style))
 
+  (defn has-material-input? [node]
+    (some #(= (.-name %) "Material") (vec (.-inputs node))))
 
+
+  ;; Top level selection 
   (let [style "sticks"
         molname (str (gensym))
         filtered-structure (aget  fap 0 (filter-resid  fap 1))
         [obj _] (molecule/_create_object  filtered-structure ** :name molname :style style)]
-    (bl_nodes/create_starting_node_tree obj ** :style style))
+
+    (let [genname (str (gensym))
+          material01 (.. bpy -data -materials (new genname))]
+      (set! (.-diffuse_color material01) [1 0 0 1])
+
+      ;; style creation is here.
+      (bl_nodes/create_starting_node_tree obj ** :style style)
+
+        ;; Get the geometry nodes modifier
+      (let [modifier (first (filter #(= (.-type %) "NODES")
+                                    (vec (.-modifiers obj))))
+            node-tree (.-node_group modifier)
+            nodes (.-nodes node-tree)]
+
+    ;; Now you can find and modify nodes in the geometry nodes tree
+        (doseq [node (vec nodes)]
+          (println "Node:" (.-name node) "Type:" (.-bl_idname node)))
+
+    ;; Find specific nodes
+        (when-let [style-node (first (filter #(str/includes? (.-name %) "Style")
+                                             (vec nodes)))]
+          ;; Modify the style node properties
+          (println "Found style node:" (.-name style-node))
+          (.. obj -data -materials (append material01))
+
+          (when-let [material-input (first (filter #(= (.-name %) "Material")
+                                                   (.. style-node -inputs)))]
+          ;; Set the material in the node's Material input
+            (set! (.-default_value material-input) material01)))))) 
+
+
+  (let []
+    (set! (.. bpy -context -scene -render -filepath)  "render.png")
+    (.. bpy -ops -render (render ** :write_still true)))
+
+  (set-view! (get-view))
   (clear-objects)
-;;  (defn filter-atom-name [stack, atomname])
-;;  (defn render! [stack])
+
+  ;;  (defn filter-atom-name [stack, atomname])
+  ;;  (defn render! [stack])
+
   )
 
    
