@@ -3,7 +3,7 @@ name = "molnodes_basilisp"
 version = "0.1.0"
 description = "Evaling Molecular Nodes in Blender"
 authors = [{name = "Zachary Charlop-Powers", email = "zach.charlop.powers@gmail.com"}]
-requires-python = ">= 3.11"
+requires-python = "== 3.11"
 dependencies = [
     "basilisp",
     "basilisp-blender",
@@ -13,10 +13,10 @@ dependencies = [
     "molecularnodes"
 ]
 
-
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/molnodes_basilisp"]
+

@@ -156,16 +156,38 @@
 
 ;; core loading function. used molnodes code + biotite bond connections.
  (defn load-pdb [code]
-   ^struct/AtomArrayStack
-   (let [stack (-> code download/download pdbx.CIFFile/read pdbx/get_structure)
-         _  (set! (.-bonds stack) (bonds/connect_via_residue_names stack))
-         stack2   (center-array stack)]
-     stack2))
+   ^struct/AtomArray
+   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first) ]
+     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
+     (center-array arr)))
 
  
- (defn render! []
-   #_TODO "take a collection of states corresponding to frames and generate an output")
+ (defn render! [^^struct/AtomArray arr style material]
+   "take a collection of states corresponding to frames and generate an output"
+  (let [molname (str (gensym))
+        [obj _] (molecule/_create_object  arr ** :name molname :style (name style))]
+    (println (str "style: "  (name style) " " style))
 
+       ;; style node is created here ......
+    (bl_nodes/create_starting_node_tree obj ** :style (name style))
+    (let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+          node-tree (.-node_group modifier)
+          nodes (.-nodes node-tree)]
+      (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+        (doseq [input (.-inputs style-node)]
+          (when (not= (.-type input) "GEOMETRY")
+            (let [input-name (.-name input)]
+              (let [styles (get core/default-styles style)]
+                (doseq [[key value] styles]
+                  (when (= input-name key)
+                    (println input " " key " " value "")
+                    (builtins/setattr input "default_value" value)))))))
+
+         ;; Set the material in the node's Material input 
+        (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+          (.. obj -data -materials (append material))
+          (set! (.-default_value material-input) material))))))
+  
 
  (defn set-view! [matrix]
    (let [mmat (mathutils/Matrix (vec matrix))
@@ -178,10 +200,18 @@
        (set! (.-view_matrix region3d) (.inverted mmat)))))
 
 
-
- 
-
  (comment
+   
+   (let [code "1a3n"
+         stack (-> code
+                   download/download
+                   pdbx.CIFFile/read
+                   pdbx/get_structure)]
+     code
+     stack
+     )
+     
+   (pdbx.CIFFile/read "1A3N")
 
 ;; styles_mapping = {
 ;;     "preset_1": "Style Preset 1",
@@ -205,24 +235,7 @@
   ;; style is one of the options above
   ;; pre filter the array. only array allowed not AtomStacks
   ;;
-   (defn render-atomarray [arr style material]
-     (let [molname (str (gensym))
-           [obj _] (molecule/_create_object  arr ** :name molname :style style)]
-
-      ;; style creation is here.
-       (bl_nodes/create_starting_node_tree obj ** :style style)
-
-      ;; Get the geometry nodes modifier
-       (let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
-                  node-tree (.-node_group modifier)
-                  nodes (.-nodes node-tree)]
-         (when-let [  style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
-           (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
-                             ;; Set the material in the node's Material input 
-                (.. obj -data -materials (append material))
-                (set! (.-default_value material-input) material))))))
-
-
+   
  (let [arr (aget  fap 0 (filter-resid  fap 1))
        style "sticks"
        genname (str (gensym))

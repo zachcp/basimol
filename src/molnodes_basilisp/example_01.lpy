@@ -54,7 +54,7 @@
     (set! (.-diffuse_color material) [1 0 0 1])
     (set! (.-diffuse_color material_ligand) [4 0 0 1])
     (render-atomarray struct :cartoon material)
-    (render-atomarray struct_lig :sphere material_ligand)
+    (render-atomarray struct_lig :spheres material_ligand)
     )
   
 
