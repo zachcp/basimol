@@ -29,3 +29,7 @@
 /checkouts
 /classes
 /target
+.idea
+Makefile
+__pycache__
+*.iml

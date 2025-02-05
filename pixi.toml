@@ -1,0 +1,57 @@
+[workspace] 
+channels = [
+  "conda-forge", 
+  "https://prefix.dev/pixi-build-backends",
+  "https://prefix.dev/conda-forge",
+]
+platforms = ["osx-arm64"]
+preview = ["pixi-build"]
+
+
+[dependencies] 
+python = "==3.11"
+basimol = { path = "." }
+ffmpeg-python = "*"
+ffmpeg = "*"
+opencv = "*"
+numpy = "<2.0"
+ipython = "*"
+pytest = "*"
+quarto = ">=1.6.40,<2"
+jupyter = ">=1.1.1,<2"
+
+
+
+[pypi-dependencies]
+basilisp = "*"
+basilisp-blender = "*"
+biotite = "*"
+bpy = "*"
+databpy = "*"
+molecularnodes = "*"
+
+
+[package] 
+name = "basimol"
+version = "0.1.0"
+
+
+[package.build] 
+backend = { name = "pixi-build-python", version = "*" }
+
+[package.host-dependencies] 
+hatchling = "==1.26.3"
+python = "==3.11"
+
+[package.run-dependencies] 
+python = "==3.11"
+
+
+[tasks] 
+remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
+repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+bootstrap = "basilisp bootstrap"
+test = "basilisp bootstrap && basilisp test --include-path tests/"
+build = "uv build"
+docs = "quarto preview docs"
+

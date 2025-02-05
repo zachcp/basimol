@@ -16,43 +16,83 @@
  
 
  (defn auto-set-camera [] #_TODO "auto set the view")
+ 
+ (def bsdf-principled-defaults
+   {"Base Color" [0.8 0.8 0.8 1.0]
+    "Metallic" 0.0
+    "Roughness" 0.2085610330104828
+    "IOR" 1.4500000476837158
+    "Alpha" 0.21675775945186615
+    "Normal" [0.0 0.0 0.0]
+    "Weight" 0.0
+    "Diffuse Roughness" 0.0
+    "Subsurface Weight" 0.0
+    "Subsurface Radius" [1.0 0.2 0.1]
+    "Subsurface Scale" 0.05000000074505806
+    "Subsurface IOR" 1.399999976158142
+    "Subsurface Anisotropy" 0.0
+    "Specular IOR Level" 0.5
+    "Specular Tint" [1.0 1.0 1.0 1.0]
+    "Anisotropic" 0.0
+    "Anisotropic Rotation" 0.0
+    "Tangent" [0.0 0.0 0.0]
+    "Transmission Weight" 0.0
+    "Coat Weight" 0.0
+    "Coat Roughness" 0.029999999329447746
+    "Coat IOR" 1.5
+    "Coat Tint" [1.0 1.0 1.0 1.0]
+    "Coat Normal" [0.0 0.0 0.0]
+    "Sheen Weight" 0.0
+    "Sheen Roughness" 0.5
+    "Sheen Tint" [0.5 0.5 0.5 1.0]
+    "Emission Color" [0.0 0.0 0.0 1.0]
+    "Emission Strength" 0.0
+    "Thin Film Thickness" 0.0
+    "Thin Film IOR" 1.3300000429153442})
+ 
+ 
+ (defn create-basic-material [name stylemap]
+   (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
+         bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
+         styles (merge bsdf-principled-defaults stylemap)]
+     (doseq [input (.-inputs bsdf)]
+       (when-not (= (.-type input) "GEOMETRY")
+         (let [input-name (.-name input)]
+           (doseq [[key value] styles]
+             (when (= input-name key)
+              ;;  (println input " " key " " value "")
+               (builtins/setattr input "default_value" value))))))))
+ 
+ 
 
  (defn- center-array [^struct/AtomArray arr]
-   (set! (.-coord arr) 
-         (np/subtract  (.-coord arr)(databpy/centre (.-coord arr))))
+   (set! (.-coord arr) (np/subtract  (.-coord arr) (databpy/centre (.-coord arr))))
    arr)
    
 
  ;; Remove Molecules and then the Cube
  (defn clear-objects []
-   (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
-     (when mol-collection
-       (doseq [obj (.. mol-collection -objects)]
-         (.. bpy -data -objects (remove obj ** :do_unlink true))))
+   (when-let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))] 
+     (doseq [obj (.. mol-collection -objects)]
+         (.. bpy -data -objects (remove obj ** :do_unlink true)))
      (doseq [obj (.. bpy -data -objects)]
        (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
          (.. bpy -data -objects (remove obj ** :do_unlink true))))))
+ 
 
+ (defn create-basic-material [name stylemap]
+   (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
+         bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
+         styles (merge bsdf-principled-defaults stylemap)]
+     (doseq [input (.-inputs bsdf)]
+       (when-not (= (.-type input) "GEOMETRY")
+         (let [input-name (.-name input)]
+           (doseq [[key value] styles]
+             (when (= input-name key)
+               (println input " " key " " value "")
+               (builtins/setattr input "default_value" value))))))))
+    
 
- ;; styles_mapping = {
-;;     "preset_1": "Style Preset 1",
-;;     "preset_2": "Style Preset 2",
-;;     "preset_3": "Style Preset 3",
-;;     "preset_4": "Style Preset 4",
-;;     "atoms": "Style Spheres",
-;;     "spheres": "Style Spheres",
-;;     "vdw": "Style Spheres",
-;;     "sphere": "Style Spheres",
-;;     "cartoon": "Style Cartoon",
-;;     "sticks": "Style Sticks",
-;;     "ribbon": "Style Ribbon",
-;;     "surface": "Style Surface",
-;;     "ball_and_stick": "Style Ball and Stick",
-;;     "ball+stick": "Style Ball and Stick",
-;;     "oxdna": "MN_oxdna_style_ribbon",
-;;     "density_surface": "Style Density Surface",
-;;     "density_wire": "Style Density Wire",
-;; }
  (def default-styles
    {:ball+stick
     {"Quality" 2
@@ -103,6 +143,7 @@
      "Blur" 2
      "Shade Smooth" true}})
 
+  
   (defn draw! [^struct/AtomArray arr style-key style-map material]
    "take a collection of states corresponding to frames and generate an output"
    (let [molname (str (gensym))
@@ -171,6 +212,7 @@
  (defn filter-solvent [arr] (filter/filter_solvent arr))
 
  
+ ;; needed to capture the active view
  (defn- get-temp-context-info []
    (let [win (.. bpy -context -window)
          areas3d (let [areas (.. bpy -context -screen -areas)]
@@ -202,7 +244,6 @@
      (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
      (center-array arr)))
 
- 
 
  (defn set-view! [matrix]
    (let [mmat (mathutils/Matrix (vec matrix))
@@ -215,10 +256,10 @@
        (set! (.-view_matrix region3d) (.inverted mmat)))))
 
 
- (comment
+ (comment 
    
    (def fap (load-pdb "1fap")) 
-   
+
    (let [arr  (load-pdb "1fap")
          genname (str (gensym))
          material (.. bpy -data -materials (new genname)) 
@@ -239,7 +280,7 @@
     ;;      material (.. bpy -data -materials (new matname))
     ;;      matname1 (str (gensym))
     ;;      material_ligand (.. bpy -data -materials (new matname1))]
-   
+  
     ;;  (set! (.-diffuse_color material) [1 0 0 1])
     ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
     ;;  (render-atomarray struct "cartoon" material)
@@ -249,7 +290,6 @@
 
    
    ; https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html
-
    (defn create-simple-material [name]
      (let [materials (.. bpy -data -materials)
            material (.new materials name)]
@@ -263,72 +303,7 @@
    
     ;; load a file
    (def fap (load-pdb "1FAP"))
-
- (set-view! (get-view))
- (clear-objects)
-
-   (let [mat (.. bpy -data -materials (new "Test"))
-         fields (dir mat)
-         ]
-     (doseq [field fields]
-       (println field)))
-  ;;  material = bpy.data.materials.new (name= "Test")
-   
-  ;;   #py ["__doc__" "__module__" "__slots__" "alpha_threshold" "animation_data" "animation_data_clear" "animation_data_create" "asset_clear" "asset_data" "asset_generate_preview" "asset_mark" "bl_rna" "blend_method" "copy" "cycles" "diffuse_color" "displacement_method" "evaluated_get" "grease_pencil" "id_type" "is_editable" "is_embedded_data" "is_evaluated" "is_grease_pencil" "is_library_indirect" "is_missing" "is_runtime_data" "library" "library_weak_reference" "line_color" "line_priority" "lineart" "make_local" "max_vertex_displacement" "metallic" "name" "name_full" "node_tree" "original" "override_create" "override_hierarchy_create" "override_library" "paint_active_slot" "paint_clone_slot" "pass_index" "preview" "preview_ensure" "preview_render_type" "refraction_depth" "rename" "rna_type" "roughness" "session_uid" "show_transparent_back" "specular_color" "specular_intensity" "surface_render_method" "tag" "texture_paint_images" "texture_paint_slots" "thickness_mode" "update_tag" "use_backface_culling" "use_backface_culling_lightprobe_volume" "use_backface_culling_shadow" "use_extra_user" "use_fake_user" "use_nodes" "use_preview_world" "use_raytrace_refraction" "use_screen_refraction" "use_sss_translucency" "use_thickness_from_shadow" "use_transparency_overlap" "use_transparent_shadow" "user_clear" "user_of_id" "user_remap" "users" "volume_intersection_method"]
-  
-   (def mat_def (bpy.data.materials/get "MN Default"))
-   (let [mat_def (bpy.data.materials/get "MN Default")]
-     (println mat_def)
-     (.. mat_def -node_tree -nodes)
-     (.use_nodes mat_def)
-     )
-   
-   (let [mat_def (bpy.data.materials/get "MN Default")]
-       (let [nodes (.. mat_def -node_tree -nodes)]
-         (doseq [node nodes]
-           (println "Node:" (.-name node) "Type:" (.-type node)))))
-   
-   (let [mat_def (bpy.data.materials/get "MN Default")
-         nodes (.. mat_def -node_tree -nodes)
-         principled-node (first (filter #(= (.-type %) "BSDF_PRINCIPLED") nodes))]
-     (doseq [input (.-inputs principled-node)]
-       (println "Input:" (.-name input)
-                "Default:" (.-default_value input))))
-   
-
-
-; Input: Base Color Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[0].default_value
-; Input: Metallic Default: 0.0
-; Input: Roughness Default: 0.2085610330104828
-; Input: IOR Default: 1.4500000476837158
-; Input: Alpha Default: 0.21675775945186615
-; Input: Normal Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[5].default_value
-; Input: Weight Default: 0.0
-; Input: Diffuse Roughness Default: 0.0
-; Input: Subsurface Weight Default: 0.0
-; Input: Subsurface Radius Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[9].default_value
-; Input: Subsurface Scale Default: 0.05000000074505806
-; Input: Subsurface IOR Default: 1.399999976158142
-; Input: Subsurface Anisotropy Default: 0.0
-; Input: Specular IOR Level Default: 0.5
-; Input: Specular Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[14].default_value
-; Input: Anisotropic Default: 0.0
-; Input: Anisotropic Rotation Default: 0.0
-; Input: Tangent Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[17].default_value
-; Input: Transmission Weight Default: 0.0
-; Input: Coat Weight Default: 0.0
-; Input: Coat Roughness Default: 0.029999999329447746
-; Input: Coat IOR Default: 1.5
-; Input: Coat Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[22].default_value
-; Input: Coat Normal Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[23].default_value
-; Input: Sheen Weight Default: 0.0
-; Input: Sheen Roughness Default: 0.5
-; Input: Sheen Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[26].default_value
-; Input: Emission Color Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[27].default_value
-; Input: Emission Strength Default: 0.0
-; Input: Thin Film Thickness Default: 0.0
-; Input: Thin Film IOR Default: 1.3300000429153442
-   
+   (set-view! (get-view))
+   (clear-objects)
  )
-
    

@@ -12,4 +12,6 @@ pixi run repl
 
 # setup repl based eval like VSCode-Calva
 
+
+pixi run docs
 ```
