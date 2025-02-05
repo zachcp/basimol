@@ -1,4 +1,4 @@
-(ns molnodes_basilisp.example_01 
+(ns basimol.example_01
   (:import
    bpy
    builtins
@@ -8,40 +8,14 @@
    [molecularnodes.utils :as bl_utils]) 
   (:require
    [basilisp.string :as str]
-   [molnodes_basilisp.core :as core]))
+   [basimol.core :as core]))
 
 
 
 (comment
   
   
-  (defn render-atomarray [arr style material]
-    (let [molname (str (gensym))
-          [obj _] (molecule/_create_object  arr ** :name molname :style (name style))]
-      (println (str "style: "  (name style) " " style))
-
-       ;; style node is created here ......
-      (bl_nodes/create_starting_node_tree obj ** :style (name style))
-      (let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
-            node-tree (.-node_group modifier)
-            nodes (.-nodes node-tree)]
-        (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
-          (doseq [input (.-inputs style-node)]
-            (when (not= (.-type input) "GEOMETRY")
-              (let [input-name (.-name input)]
-                (let [styles (get core/default-styles style)]
-                  (doseq [[key value] styles]
-                    (when (= input-name key)
-                      (println input " " key " " value "")
-                      (builtins/setattr input "default_value" value)))))))
-
-         ;; Set the material in the node's Material input 
-        (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
-          (.. obj -data -materials (append material))
-          (set! (.-default_value material-input) material))))))
-  
-  
-  (let [hemoglobin (first (seq (core/load-pdb "1a3n")))
+  (let [hemoglobin (core/load-pdb "1a3n")
         proteins (core/filter-polymer hemoglobin) 
         ligand (core/filter-resname hemoglobin "HEM")
         struct (aget hemoglobin proteins) 
@@ -53,11 +27,10 @@
     
     (set! (.-diffuse_color material) [1 0 0 1])
     (set! (.-diffuse_color material_ligand) [4 0 0 1])
-    (render-atomarray struct :cartoon material)
-    (render-atomarray struct_lig :spheres material_ligand)
+    (core/draw! struct :cartoon material)
+    (core/draw! struct_lig :spheres material_ligand)
     )
   
-
  (core/clear-objects) 
 
   

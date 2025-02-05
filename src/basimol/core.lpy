@@ -1,0 +1,334 @@
+(ns basimol.core
+   (:import bpy
+            builtins
+            databpy
+            mathutils
+            [molecularnodes.entities.molecule.molecule :as molecule]
+            [molecularnodes.download :as download]
+            [molecularnodes.blender.nodes  :as bl_nodes]
+            [numpy :as np]
+            [biotite.structure.io.pdbx :as pdbx]
+            [biotite.structure.filter :as filter]
+            [biotite.structure :as struct]
+            [biotite.structure.bonds :as bonds])
+   (:require [basilisp.string :as str]))
+
+ 
+
+ (defn auto-set-camera [] #_TODO "auto set the view")
+
+ (defn- center-array [^struct/AtomArray arr]
+   (set! (.-coord arr) 
+         (np/subtract  (.-coord arr)(databpy/centre (.-coord arr))))
+   arr)
+   
+
+ ;; Remove Molecules and then the Cube
+ (defn clear-objects []
+   (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
+     (when mol-collection
+       (doseq [obj (.. mol-collection -objects)]
+         (.. bpy -data -objects (remove obj ** :do_unlink true))))
+     (doseq [obj (.. bpy -data -objects)]
+       (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
+         (.. bpy -data -objects (remove obj ** :do_unlink true))))))
+
+
+ ;; styles_mapping = {
+;;     "preset_1": "Style Preset 1",
+;;     "preset_2": "Style Preset 2",
+;;     "preset_3": "Style Preset 3",
+;;     "preset_4": "Style Preset 4",
+;;     "atoms": "Style Spheres",
+;;     "spheres": "Style Spheres",
+;;     "vdw": "Style Spheres",
+;;     "sphere": "Style Spheres",
+;;     "cartoon": "Style Cartoon",
+;;     "sticks": "Style Sticks",
+;;     "ribbon": "Style Ribbon",
+;;     "surface": "Style Surface",
+;;     "ball_and_stick": "Style Ball and Stick",
+;;     "ball+stick": "Style Ball and Stick",
+;;     "oxdna": "MN_oxdna_style_ribbon",
+;;     "density_surface": "Style Density Surface",
+;;     "density_wire": "Style Density Wire",
+;; }
+ (def default-styles
+   {:ball+stick
+    {"Quality" 2
+     "As Mesh" true
+     "Sphere Radii" 0.3
+     "Bond Split" false
+     "Bond Find" false
+     "Bond Radius" 0.3
+     "Color Blur" false
+     "Shade Smooth" true}
+    :cartoon
+    {"Quality" 2
+     "DSSP" false
+     "Cylinders" false
+     "Arrows" true
+     "Rounded" false
+     "Thickness" 0.6
+     "Width" 2.2
+     "Loop Radius" 0.3
+     "Smoothing" 0.5
+     "Color Blur" false
+     "Shade Smooth" true}
+    :ribbon
+    {"Quality" 3
+     "Radius" 1.6
+     "Smoothing" 0.6
+     "Color Blur" false
+     "Shade Smooth" false}
+    :spheres
+    {"As Mesh" true
+     "Radii" 0.8
+     "Subdivisions" 2
+     "Shade Smooth" false} 
+    :sticks
+    {"Quality" 2
+     "Radius" 0.2
+     "Color Blur" false
+     "Shade Smooth" false}
+    :surface
+    {"Quality" 3
+     "Separate" true
+     "Attribute" "chain_id"
+     "Scale Radii" 1.5
+     "Probe Size" 1.0
+     "Triangulate" false
+     "Relaxation Steps" 10
+     "by CA" false
+     "Blur" 2
+     "Shade Smooth" true}})
+
+  (defn draw! [^struct/AtomArray arr style-key style-map material]
+   "take a collection of states corresponding to frames and generate an output"
+   (let [molname (str (gensym))
+         [obj _] (molecule/_create_object  arr ** :name molname :style (name style-key))
+         _ (bl_nodes/create_starting_node_tree obj ** :style (name style-key))
+         modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+         node-tree (.-node_group modifier)
+         nodes (.-nodes node-tree)
+         global-styles (merge default-styles style-map)]
+     (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+       (doseq [input (.-inputs style-node)]
+         (when (not= (.-type input) "GEOMETRY")
+           (let [input-name (.-name input)
+                 styles (get global-styles style-key)]
+             (doseq [[key value] styles]
+               (when (= input-name key)
+                 (println input " " key " " value "")
+                 (builtins/setattr input "default_value" value))))))
+ 
+          ;; Set the material in the node's Material input 
+       (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+         (.. obj -data -materials (append material))
+         (set! (.-default_value material-input) material)))))
+  
+
+ (defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
+ 
+ (defn filter-atomname [arr atomname] (= atomname (.get_annotation arr "atom_name")))
+ 
+ (defn filter-canonical-amino-acids [arr] (filter/filter_canonical_amino_acids arr))
+ 
+ (defn filter-canonical-nucleotides [arr] (filter/filter_canonical_nucleotides arr))
+ 
+ (defn filter-carbohydrates [arr] (filter/filter_carbohydrates arr))
+ 
+ (defn filter-chain [arr chain] (= chain (.get_annotation arr "chain_id")))
+ 
+ (defn filter-element [arr element] (= element (.get_annotation arr "element")))
+ 
+ (defn filter-first-altloc [arr] (filter/filter_first_altloc arr))
+ 
+ (defn filter-hetero [arr] (= true (.get_annotation arr "hetero")))
+ 
+ (defn filter-highest-occupancy-altloc [arr] (filter/filter_highest_occupancy_altloc arr))
+ 
+ (defn filter-inscode [arr inscode] (= inscode (.get_annotation arr "ins_code")))
+ 
+ (defn filter-intersection [arr] (filter/filter_intersection arr))
+ 
+ (defn filter-linear-bond-continuity [arr] (filter/filter_linear_bond_continuity arr))
+ 
+ (defn filter-monoatomic-ions [arr] (filter/filter_monoatomic_ions arr))
+ 
+ (defn filter-nucleotides [arr] (filter/filter_nucleotides arr))
+ 
+ (defn filter-peptide-backbone [arr] (filter/filter_peptide_backbone arr))
+ 
+ (defn filter-phosphate-backbone [arr] (filter/filter_phosphate_backbone arr))
+ 
+ (defn filter-polymer [arr] (filter/filter_polymer arr))
+ 
+ (defn filter-resid [arr num] (= num (.get_annotation arr "res_id")))
+ 
+ (defn filter-resname [arr res_name] (= res_name (.get_annotation arr "res_name")))
+ 
+ (defn filter-solvent [arr] (filter/filter_solvent arr))
+
+ 
+ (defn- get-temp-context-info []
+   (let [win (.. bpy -context -window)
+         areas3d (let [areas (.. bpy -context -screen -areas)]
+                   (-> (filter #(= (.-type %) "VIEW_3D") areas) first))
+         region (let [region (.-regions areas3d)]
+                  (-> (filter #(= (.-type %) "WINDOW") region) first))]
+     {:window win
+      :area areas3d
+      :region region}))
+
+ 
+ (defn get-view []
+   (let [ctx (get-temp-context-info)
+         area3d (:area ctx)
+         camera (.. bpy -context -scene -camera)
+         region3d (.. area3d -spaces -active -region_3d)]
+     (when (and area3d region3d camera)
+       (let [view-matrix (.-view_matrix region3d)
+             camera-matrix (.inverted view-matrix)]
+         (set! (.-matrix_world camera) camera-matrix)
+         (let [mat (.-matrix_world camera)]
+           (map vec mat))))))
+
+
+;; core loading function. used molnodes code + biotite bond connections.
+ (defn load-pdb [code]
+   ^struct/AtomArray
+   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first) ]
+     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
+     (center-array arr)))
+
+ 
+
+ (defn set-view! [matrix]
+   (let [mmat (mathutils/Matrix (vec matrix))
+         ctx (get-temp-context-info)
+         area3d (:area ctx)
+         camera (.. bpy -context -scene -camera)
+         region3d (.. area3d -spaces -active -region_3d)]
+     (when (and area3d region3d camera)
+       (set! (.. bpy -context -scene -camera -matrix_world) mmat)
+       (set! (.-view_matrix region3d) (.inverted mmat)))))
+
+
+ (comment
+   
+   (def fap (load-pdb "1fap")) 
+   
+   (let [arr  (load-pdb "1fap")
+         genname (str (gensym))
+         material (.. bpy -data -materials (new genname)) 
+         ligand (filter-resname arr "RAP") 
+         struct_lig (aget arr ligand)
+         ]
+     (set! (.-diffuse_color material) [1 0 0 1])
+     (draw! arr :cartoon {} material)
+     (draw! struct_lig :ball+stick {} material)
+     (draw! arr :surface {} material))
+   
+    ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
+    ;;      proteins (core/filter-polymer hemoglobin)
+    ;;      ligand (core/filter-resname hemoglobin "RAP")
+    ;;      struct (aget hemoglobin proteins)
+    ;;      struct_lig (aget hemoglobin ligand)
+    ;;      matname (str (gensym))
+    ;;      material (.. bpy -data -materials (new matname))
+    ;;      matname1 (str (gensym))
+    ;;      material_ligand (.. bpy -data -materials (new matname1))]
+   
+    ;;  (set! (.-diffuse_color material) [1 0 0 1])
+    ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
+    ;;  (render-atomarray struct "cartoon" material)
+    ;;  (render-atomarray struct_lig "surface" material_ligand)) 
+
+   (clear-objects)
+
+   
+   ; https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html
+
+   (defn create-simple-material [name]
+     (let [materials (.. bpy -data -materials)
+           material (.new materials name)]
+       (python/setattr material "use_nodes" true)
+       material))
+   
+    ;; move the view around and get the view
+    ;; the move around and set it back
+   (def mat01 (get-view))
+   (set-view! (get-view)) 
+   
+    ;; load a file
+   (def fap (load-pdb "1FAP"))
+
+ (set-view! (get-view))
+ (clear-objects)
+
+   (let [mat (.. bpy -data -materials (new "Test"))
+         fields (dir mat)
+         ]
+     (doseq [field fields]
+       (println field)))
+  ;;  material = bpy.data.materials.new (name= "Test")
+   
+  ;;   #py ["__doc__" "__module__" "__slots__" "alpha_threshold" "animation_data" "animation_data_clear" "animation_data_create" "asset_clear" "asset_data" "asset_generate_preview" "asset_mark" "bl_rna" "blend_method" "copy" "cycles" "diffuse_color" "displacement_method" "evaluated_get" "grease_pencil" "id_type" "is_editable" "is_embedded_data" "is_evaluated" "is_grease_pencil" "is_library_indirect" "is_missing" "is_runtime_data" "library" "library_weak_reference" "line_color" "line_priority" "lineart" "make_local" "max_vertex_displacement" "metallic" "name" "name_full" "node_tree" "original" "override_create" "override_hierarchy_create" "override_library" "paint_active_slot" "paint_clone_slot" "pass_index" "preview" "preview_ensure" "preview_render_type" "refraction_depth" "rename" "rna_type" "roughness" "session_uid" "show_transparent_back" "specular_color" "specular_intensity" "surface_render_method" "tag" "texture_paint_images" "texture_paint_slots" "thickness_mode" "update_tag" "use_backface_culling" "use_backface_culling_lightprobe_volume" "use_backface_culling_shadow" "use_extra_user" "use_fake_user" "use_nodes" "use_preview_world" "use_raytrace_refraction" "use_screen_refraction" "use_sss_translucency" "use_thickness_from_shadow" "use_transparency_overlap" "use_transparent_shadow" "user_clear" "user_of_id" "user_remap" "users" "volume_intersection_method"]
+  
+   (def mat_def (bpy.data.materials/get "MN Default"))
+   (let [mat_def (bpy.data.materials/get "MN Default")]
+     (println mat_def)
+     (.. mat_def -node_tree -nodes)
+     (.use_nodes mat_def)
+     )
+   
+   (let [mat_def (bpy.data.materials/get "MN Default")]
+       (let [nodes (.. mat_def -node_tree -nodes)]
+         (doseq [node nodes]
+           (println "Node:" (.-name node) "Type:" (.-type node)))))
+   
+   (let [mat_def (bpy.data.materials/get "MN Default")
+         nodes (.. mat_def -node_tree -nodes)
+         principled-node (first (filter #(= (.-type %) "BSDF_PRINCIPLED") nodes))]
+     (doseq [input (.-inputs principled-node)]
+       (println "Input:" (.-name input)
+                "Default:" (.-default_value input))))
+   
+
+
+; Input: Base Color Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[0].default_value
+; Input: Metallic Default: 0.0
+; Input: Roughness Default: 0.2085610330104828
+; Input: IOR Default: 1.4500000476837158
+; Input: Alpha Default: 0.21675775945186615
+; Input: Normal Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[5].default_value
+; Input: Weight Default: 0.0
+; Input: Diffuse Roughness Default: 0.0
+; Input: Subsurface Weight Default: 0.0
+; Input: Subsurface Radius Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[9].default_value
+; Input: Subsurface Scale Default: 0.05000000074505806
+; Input: Subsurface IOR Default: 1.399999976158142
+; Input: Subsurface Anisotropy Default: 0.0
+; Input: Specular IOR Level Default: 0.5
+; Input: Specular Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[14].default_value
+; Input: Anisotropic Default: 0.0
+; Input: Anisotropic Rotation Default: 0.0
+; Input: Tangent Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[17].default_value
+; Input: Transmission Weight Default: 0.0
+; Input: Coat Weight Default: 0.0
+; Input: Coat Roughness Default: 0.029999999329447746
+; Input: Coat IOR Default: 1.5
+; Input: Coat Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[22].default_value
+; Input: Coat Normal Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[23].default_value
+; Input: Sheen Weight Default: 0.0
+; Input: Sheen Roughness Default: 0.5
+; Input: Sheen Tint Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[26].default_value
+; Input: Emission Color Default: bpy.data.materials['MN Default'].node_tree.nodes["Principled BSDF"].inputs[27].default_value
+; Input: Emission Strength Default: 0.0
+; Input: Thin Film Thickness Default: 0.0
+; Input: Thin Film IOR Default: 1.3300000429153442
+   
+ )
+
+   

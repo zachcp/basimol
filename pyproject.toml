@@ -1,5 +1,5 @@
 [project]
-name = "molnodes_basilisp"
+name = "basimol"
 version = "0.1.0"
 description = "Evaling Molecular Nodes in Blender"
 authors = [{name = "Zachary Charlop-Powers", email = "zach.charlop.powers@gmail.com"}]
@@ -18,5 +18,5 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/molnodes_basilisp"]
+packages = ["src/basimol"]
 
