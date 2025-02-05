@@ -1,0 +1,120 @@
+(ns molnodes_basilisp.example_01 
+  (:import
+   bpy
+   builtins
+   os
+   [molecularnodes.entities.molecule.molecule :as molecule]
+   [molecularnodes.blender.nodes  :as bl_nodes]
+   [molecularnodes.utils :as bl_utils]) 
+  (:require
+   [basilisp.string :as str]
+   [molnodes_basilisp.core :as core]))
+
+
+
+(comment
+  
+  
+  (defn render-atomarray [arr style material]
+    (let [molname (str (gensym))
+          [obj _] (molecule/_create_object  arr ** :name molname :style (name style))]
+      (println (str "style: "  (name style) " " style))
+
+       ;; style node is created here ......
+      (bl_nodes/create_starting_node_tree obj ** :style (name style))
+      (let [modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+            node-tree (.-node_group modifier)
+            nodes (.-nodes node-tree)]
+        (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+          (doseq [input (.-inputs style-node)]
+            (when (not= (.-type input) "GEOMETRY")
+              (let [input-name (.-name input)]
+                (let [styles (get core/default-styles style)]
+                  (doseq [[key value] styles]
+                    (when (= input-name key)
+                      (println input " " key " " value "")
+                      (builtins/setattr input "default_value" value)))))))
+
+         ;; Set the material in the node's Material input 
+        (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+          (.. obj -data -materials (append material))
+          (set! (.-default_value material-input) material))))))
+  
+  
+  (let [hemoglobin (first (seq (core/load-pdb "1a3n")))
+        proteins (core/filter-polymer hemoglobin) 
+        ligand (core/filter-resname hemoglobin "HEM")
+        struct (aget hemoglobin proteins) 
+        struct_lig (aget hemoglobin ligand) 
+        matname (str (gensym))
+        material (.. bpy -data -materials (new matname))
+        matname1 (str (gensym))
+        material_ligand (.. bpy -data -materials (new matname1))]
+    
+    (set! (.-diffuse_color material) [1 0 0 1])
+    (set! (.-diffuse_color material_ligand) [4 0 0 1])
+    (render-atomarray struct :cartoon material)
+    (render-atomarray struct_lig :sphere material_ligand)
+    )
+  
+
+ (core/clear-objects) 
+
+  
+  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
+        proteins (core/filter-polymer hemoglobin)
+        ligand (core/filter-resname hemoglobin "RAP")
+        struct (aget hemoglobin proteins)
+        struct_lig (aget hemoglobin ligand)
+        matname (str (gensym))
+        material (.. bpy -data -materials (new matname))
+        matname1 (str (gensym))
+        material_ligand (.. bpy -data -materials (new matname1))]
+  
+    (set! (.-diffuse_color material) [1 0 0 1])
+    (set! (.-diffuse_color material_ligand) [4 0 0 1])
+    (render-atomarray struct "cartoon" material)
+    (render-atomarray struct_lig "surface" material_ligand)
+    ) 
+  
+ 
+  (core/set-view! (core/get-view))
+  (core/clear-objects)
+
+ 
+  (def hemoglobin (core/load-pdb "1a3n"))
+  (def hemoglobin1 (first (seq (core/load-pdb "1a3n")))) 
+   
+  (.invert (core/filter-polymer hemoglobin1))
+  
+
+;; styles_mapping = {
+;;     "preset_1": "Style Preset 1",
+;;     "preset_2": "Style Preset 2",
+;;     "preset_3": "Style Preset 3",
+;;     "preset_4": "Style Preset 4",
+;;     "atoms": "Style Spheres",
+;;     "spheres": "Style Spheres",
+;;     "vdw": "Style Spheres",
+;;     "sphere": "Style Spheres",
+;;     "cartoon": "Style Cartoon",
+;;     "sticks": "Style Sticks",
+;;     "ribbon": "Style Ribbon",
+;;     "surface": "Style Surface",
+;;     "ball_and_stick": "Style Ball and Stick",
+;;     "ball+stick": "Style Ball and Stick",
+;;     "oxdna": "MN_oxdna_style_ribbon",
+;;     "density_surface": "Style Density Surface",
+;;     "density_wire": "Style Density Wire",
+;; }
+;; style is one of the options above
+;; pre filter the array. only array allowed not AtomStacks
+;;
+  
+  (set-view! (get-view))
+  (clear-objects)
+
+;;  (defn filter-atom-name [stack, atomname])
+    
+)
+

@@ -13,7 +13,6 @@
             [biotite.structure.bonds :as bonds])
    (:require [basilisp.string :as str]))
 
-
  (defn auto-set-camera []
    #_TODO "auto set the view")
 
@@ -40,6 +39,49 @@
                   (not= "Camera" (.-name obj)))
          (.. bpy -data -objects (remove obj ** :do_unlink true))))))
 
+
+ (def default-styles
+   {:cartoon
+    {"Selection" true
+     "Quality" 2
+     "DSSP" true
+     "Cylinders" false
+     "Arrows" true
+     "Rounded" true
+     "Thickness" 0.6
+     "Width" 2.2
+     "Loop Radius" 0.3
+     "Smoothing" 0.5
+     "Color Blur" false
+     "Shade Smooth" false}
+    :ball-and-stick
+    {"Quality" 2
+     "Selection" true
+     "Sphere As Mesh" true
+     "Sphere Radii" 0.3
+     "Bond Split" false
+     "Bond Find" false
+     "Bond Radius" 0.3
+     "Color Blur" false
+     "Shade Smooth" false}
+    :spheres
+    {"Selection" true
+     "Sphere As Mesh" true
+     "Sphere Radii" 0.8
+     "Sphere Subdivisions" 3
+     "Shade Smooth" false}
+    :surface
+    {"Selection" true
+     "Quality" 5
+     "Separate" false
+     "Attribute" "chain_id"
+     "Scale Radii" 1.5
+     "Probe Size" 1.0
+     "Triangulate" false
+     "Relaxation Steps" 10
+     "Color by CA" false
+     "Color Blur" 2
+     "Shade Smooth" true}})
 
 
  (defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
@@ -120,7 +162,7 @@
          stack2   (center-array stack)]
      stack2))
 
-
+ 
  (defn render! []
    #_TODO "take a collection of states corresponding to frames and generate an output")
 
@@ -137,6 +179,7 @@
 
 
 
+ 
 
  (comment
 
@@ -194,17 +237,15 @@
        (python/setattr material "use_nodes" true)
        material))
    
-   
     ;; move the view around and get the view
     ;; the move around and set it back
    (def mat01 (get-view))
-   (set-view! (get-view))
-   
+   (set-view! (get-view)) 
    
     ;; load a file
    (def fap (load-pdb "1FAP"))
 
-   
+;;  (pdbx/get_structure)
  (set-view! (get-view))
  (clear-objects)
 
