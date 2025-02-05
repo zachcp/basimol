@@ -1,9 +1,5 @@
-# molnodes-basilips
+# basimol
 
-
-## Installation
-
-Download from https://github.com/blenderrepl/blenderrepl
 
 ## Usage
 
@@ -11,7 +7,9 @@ Download from https://github.com/blenderrepl/blenderrepl
 ```sh
 # install Blender
 # install pixi
+
 pixi run repl
 
 # setup repl based eval like VSCode-Calva
+
 ```
