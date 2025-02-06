@@ -1,0 +1,87 @@
+(ns basimol.styles)
+
+(def default-styles
+  {:ball+stick
+   {"Quality" 2
+    "As Mesh" true
+    "Sphere Radii" 0.3
+    "Bond Split" false
+    "Bond Find" false
+    "Bond Radius" 0.3
+    "Color Blur" false
+    "Shade Smooth" true}
+   :cartoon
+   {"Quality" 2
+    "DSSP" false
+    "Cylinders" false
+    "Arrows" true
+    "Rounded" false
+    "Thickness" 0.6
+    "Width" 2.2
+    "Loop Radius" 0.3
+    "Smoothing" 0.5
+    "Color Blur" false
+    "Shade Smooth" true}
+   :ribbon
+   {"Quality" 3
+    "Radius" 1.6
+    "Smoothing" 0.6
+    "Color Blur" false
+    "Shade Smooth" false}
+   :spheres
+   {"As Mesh" true
+    "Radii" 0.8
+    "Subdivisions" 2
+    "Shade Smooth" false}
+   :sticks
+   {"Quality" 2
+    "Radius" 0.2
+    "Color Blur" false
+    "Shade Smooth" false}
+   :surface
+   {"Quality" 3
+    "Separate" true
+    "Attribute" "chain_id"
+    "Scale Radii" 1.5
+    "Probe Size" 1.0
+    "Triangulate" false
+    "Relaxation Steps" 10
+    "by CA" false
+    "Blur" 2
+    "Shade Smooth" true}})
+ 
+ 
+
+ 
+(def bsdf-principled-defaults
+  {"Base Color" [0.8 0.8 0.8 1.0]
+   "Metallic" 0.0
+   "Roughness" 0.2085610330104828
+   "IOR" 1.4500000476837158
+   "Alpha" 0.5
+   "Normal" [0.0 0.0 0.0]
+   "Weight" 0.0
+   "Diffuse Roughness" 0.0
+   "Subsurface Weight" 0.0
+   "Subsurface Radius" [1.0 0.2 0.1]
+   "Subsurface Scale" 0.05000000074505806
+   "Subsurface IOR" 1.399999976158142
+   "Subsurface Anisotropy" 0.0
+   "Specular IOR Level" 0.5
+   "Specular Tint" [1.0 1.0 1.0 1.0]
+   "Anisotropic" 0.0
+   "Anisotropic Rotation" 0.0
+   "Tangent" [0.0 0.0 0.0]
+   "Transmission Weight" 0.0
+   "Coat Weight" 0.0
+   "Coat Roughness" 0.029999999329447746
+   "Coat IOR" 1.5
+   "Coat Tint" [1.0 1.0 1.0 1.0]
+   "Coat Normal" [0.0 0.0 0.0]
+   "Sheen Weight" 0.0
+   "Sheen Roughness" 0.5
+   "Sheen Tint" [0.5 0.5 0.5 1.0]
+   "Emission Color" [0.0 0.0 0.0 1.0]
+   "Emission Strength" 0.0
+   "Thin Film Thickness" 0.0
+   "Thin Film IOR" 1.3300000429153442})

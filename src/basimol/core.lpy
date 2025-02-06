@@ -11,163 +11,69 @@
             [biotite.structure.filter :as filter]
             [biotite.structure :as struct]
             [biotite.structure.bonds :as bonds])
-   (:require [basilisp.string :as str]))
+   (:require [basilisp.string :as str]
+             [basimol.styles :refer [bsdf-principled-defaults default-styles]]))
 
  
 
  (defn auto-set-camera [] #_TODO "auto set the view")
  
- (def bsdf-principled-defaults
-   {"Base Color" [0.8 0.8 0.8 1.0]
-    "Metallic" 0.0
-    "Roughness" 0.2085610330104828
-    "IOR" 1.4500000476837158
-    "Alpha" 0.21675775945186615
-    "Normal" [0.0 0.0 0.0]
-    "Weight" 0.0
-    "Diffuse Roughness" 0.0
-    "Subsurface Weight" 0.0
-    "Subsurface Radius" [1.0 0.2 0.1]
-    "Subsurface Scale" 0.05000000074505806
-    "Subsurface IOR" 1.399999976158142
-    "Subsurface Anisotropy" 0.0
-    "Specular IOR Level" 0.5
-    "Specular Tint" [1.0 1.0 1.0 1.0]
-    "Anisotropic" 0.0
-    "Anisotropic Rotation" 0.0
-    "Tangent" [0.0 0.0 0.0]
-    "Transmission Weight" 0.0
-    "Coat Weight" 0.0
-    "Coat Roughness" 0.029999999329447746
-    "Coat IOR" 1.5
-    "Coat Tint" [1.0 1.0 1.0 1.0]
-    "Coat Normal" [0.0 0.0 0.0]
-    "Sheen Weight" 0.0
-    "Sheen Roughness" 0.5
-    "Sheen Tint" [0.5 0.5 0.5 1.0]
-    "Emission Color" [0.0 0.0 0.0 1.0]
-    "Emission Strength" 0.0
-    "Thin Film Thickness" 0.0
-    "Thin Film IOR" 1.3300000429153442})
- 
- 
- (defn create-basic-material [name stylemap]
-   (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
-         bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
-         styles (merge bsdf-principled-defaults stylemap)]
-     (doseq [input (.-inputs bsdf)]
-       (when-not (= (.-type input) "GEOMETRY")
-         (let [input-name (.-name input)]
-           (doseq [[key value] styles]
-             (when (= input-name key)
-              ;;  (println input " " key " " value "")
-               (builtins/setattr input "default_value" value))))))))
- 
- 
 
- (defn- center-array [^struct/AtomArray arr]
+ (defn- center-array [arr]
    (set! (.-coord arr) (np/subtract  (.-coord arr) (databpy/centre (.-coord arr))))
    arr)
    
 
  ;; Remove Molecules and then the Cube
  (defn clear-objects []
-   (when-let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))] 
-     (doseq [obj (.. mol-collection -objects)]
-         (.. bpy -data -objects (remove obj ** :do_unlink true)))
+   (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
+     (when mol-collection
+       (doseq [obj (.. mol-collection -objects)]
+         (.. bpy -data -objects (remove obj ** :do_unlink true))))
      (doseq [obj (.. bpy -data -objects)]
        (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
          (.. bpy -data -objects (remove obj ** :do_unlink true))))))
+
+ 
+(defn create-basic-material [name stylemap]
+  (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
+        bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
+        styles (merge bsdf-principled-defaults stylemap)]
+    (doseq [input (.-inputs bsdf)]
+      (when-not (= (.-type input) "GEOMETRY")
+        (let [input-name (.-name input)]
+          (doseq [[key value] styles]
+            (when (= input-name key)
+              ;;  (println input " " key " " value "")
+              (builtins/setattr input "default_value" value))))))
+    mat))
  
 
- (defn create-basic-material [name stylemap]
-   (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
-         bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
-         styles (merge bsdf-principled-defaults stylemap)]
-     (doseq [input (.-inputs bsdf)]
-       (when-not (= (.-type input) "GEOMETRY")
-         (let [input-name (.-name input)]
-           (doseq [[key value] styles]
-             (when (= input-name key)
-               (println input " " key " " value "")
-               (builtins/setattr input "default_value" value))))))))
-    
+ (defn draw! [arr style-key style-map material]
+  "take a collection of states corresponding to frames and generate an output"
+  (let [molname (str (gensym))
+        [obj _] (molecule/_create_object  arr ** :name molname :style (name style-key))
+        _ (bl_nodes/create_starting_node_tree obj ** :style (name style-key))
+        modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+        node-tree (.-node_group modifier)
+        nodes (.-nodes node-tree)
+        global-styles (merge default-styles style-map)]
+    (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+      (doseq [input (.-inputs style-node)]
+        (when (not= (.-type input) "GEOMETRY")
+          (let [input-name (.-name input)
+                styles (get global-styles style-key)]
+            (doseq [[key value] styles]
+              (when (= input-name key)
+                (println input " " key " " value "")
+                (builtins/setattr input "default_value" value))))))
 
- (def default-styles
-   {:ball+stick
-    {"Quality" 2
-     "As Mesh" true
-     "Sphere Radii" 0.3
-     "Bond Split" false
-     "Bond Find" false
-     "Bond Radius" 0.3
-     "Color Blur" false
-     "Shade Smooth" true}
-    :cartoon
-    {"Quality" 2
-     "DSSP" false
-     "Cylinders" false
-     "Arrows" true
-     "Rounded" false
-     "Thickness" 0.6
-     "Width" 2.2
-     "Loop Radius" 0.3
-     "Smoothing" 0.5
-     "Color Blur" false
-     "Shade Smooth" true}
-    :ribbon
-    {"Quality" 3
-     "Radius" 1.6
-     "Smoothing" 0.6
-     "Color Blur" false
-     "Shade Smooth" false}
-    :spheres
-    {"As Mesh" true
-     "Radii" 0.8
-     "Subdivisions" 2
-     "Shade Smooth" false} 
-    :sticks
-    {"Quality" 2
-     "Radius" 0.2
-     "Color Blur" false
-     "Shade Smooth" false}
-    :surface
-    {"Quality" 3
-     "Separate" true
-     "Attribute" "chain_id"
-     "Scale Radii" 1.5
-     "Probe Size" 1.0
-     "Triangulate" false
-     "Relaxation Steps" 10
-     "by CA" false
-     "Blur" 2
-     "Shade Smooth" true}})
+           ;; Set the material in the node's Material input 
+      (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+        (.. obj -data -materials (append material))
+        (set! (.-default_value material-input) material)))))
+  
 
-  
-  (defn draw! [^struct/AtomArray arr style-key style-map material]
-   "take a collection of states corresponding to frames and generate an output"
-   (let [molname (str (gensym))
-         [obj _] (molecule/_create_object  arr ** :name molname :style (name style-key))
-         _ (bl_nodes/create_starting_node_tree obj ** :style (name style-key))
-         modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
-         node-tree (.-node_group modifier)
-         nodes (.-nodes node-tree)
-         global-styles (merge default-styles style-map)]
-     (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
-       (doseq [input (.-inputs style-node)]
-         (when (not= (.-type input) "GEOMETRY")
-           (let [input-name (.-name input)
-                 styles (get global-styles style-key)]
-             (doseq [[key value] styles]
-               (when (= input-name key)
-                 (println input " " key " " value "")
-                 (builtins/setattr input "default_value" value))))))
- 
-          ;; Set the material in the node's Material input 
-       (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
-         (.. obj -data -materials (append material))
-         (set! (.-default_value material-input) material)))))
-  
 
  (defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
  
@@ -256,21 +162,35 @@
        (set! (.-view_matrix region3d) (.inverted mmat)))))
 
 
- (comment 
-   
-   (def fap (load-pdb "1fap")) 
+ (comment
 
-   (let [arr  (load-pdb "1fap")
-         genname (str (gensym))
-         material (.. bpy -data -materials (new genname)) 
-         ligand (filter-resname arr "RAP") 
+   ;; Example 01
+   ;; lets display Rapamycin 
+
+   (let [;; styles
+         surface_params {"Emission Strength" 0.5}
+         cartoon_params {"Emission Strength" 0.5}
+         sticks_params {"Emission Strength" 0.5}
+
+         surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+         cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+         sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
+         
+         arr  (load-pdb "1fap")
+         ligand (filter-resname arr "RAP")
          struct_lig (aget arr ligand)
+
          ]
-     (set! (.-diffuse_color material) [1 0 0 1])
-     (draw! arr :cartoon {} material)
-     (draw! struct_lig :ball+stick {} material)
-     (draw! arr :surface {} material))
+     ;;  (println surface_material)
+     ;;  (set! (.-diffuse_color material) [1 0 0 1])
+     ;;  (set! (.-diffuse_color material) [1 0 0 1])
+     (draw! arr :cartoon {} cartoon_material)
+     (draw! struct_lig :ball+stick {} sticks_material)
+     (draw! arr :surface {} surface_material)
+     (set-view! [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124] [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175] [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247] [-0.0 0.0 -0.0 1.0]])
+     )
    
+   (clear-objects)
     ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
     ;;      proteins (core/filter-polymer hemoglobin)
     ;;      ligand (core/filter-resname hemoglobin "RAP")
@@ -280,30 +200,10 @@
     ;;      material (.. bpy -data -materials (new matname))
     ;;      matname1 (str (gensym))
     ;;      material_ligand (.. bpy -data -materials (new matname1))]
-  
     ;;  (set! (.-diffuse_color material) [1 0 0 1])
     ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
     ;;  (render-atomarray struct "cartoon" material)
     ;;  (render-atomarray struct_lig "surface" material_ligand)) 
-
    (clear-objects)
-
-   
-   ; https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html
-   (defn create-simple-material [name]
-     (let [materials (.. bpy -data -materials)
-           material (.new materials name)]
-       (python/setattr material "use_nodes" true)
-       material))
-   
-    ;; move the view around and get the view
-    ;; the move around and set it back
-   (def mat01 (get-view))
-   (set-view! (get-view)) 
-   
-    ;; load a file
-   (def fap (load-pdb "1FAP"))
-   (set-view! (get-view))
-   (clear-objects)
- )
+   )
    

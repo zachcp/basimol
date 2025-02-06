@@ -10,11 +10,10 @@
    [basilisp.string :as str]
    [basimol.core :as core]))
 
+ 
+ 
 
-
-(comment
-  
-  
+(comment 
   (let [hemoglobin (core/load-pdb "1a3n")
         proteins (core/filter-polymer hemoglobin) 
         ligand (core/filter-resname hemoglobin "HEM")

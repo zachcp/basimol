@@ -51,7 +51,7 @@ python = "==3.11"
 
 [tasks] 
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
-repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+repl = "basilisp bootstrap && /Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
 bootstrap = "basilisp bootstrap"
 test = "basilisp bootstrap && basilisp test --include-path tests/"
 build = "uv build"
