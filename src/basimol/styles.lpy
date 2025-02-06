@@ -58,7 +58,7 @@
    "Metallic" 0.0
    "Roughness" 0.2085610330104828
    "IOR" 1.4500000476837158
-   "Alpha" 0.5
+   "Alpha" 1.0
    "Normal" [0.0 0.0 0.0]
    "Weight" 0.0
    "Diffuse Roughness" 0.0

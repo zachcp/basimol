@@ -164,33 +164,62 @@
 
  (comment
 
+   ;; global setup to write outputs to a file
+   (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
+   (set! (.. bpy -context -scene -render -filepath) "render.png")
+
    ;; Example 01
    ;; lets display Rapamycin 
 
-   (let [;; styles
-         surface_params {"Emission Strength" 0.5}
-         cartoon_params {"Emission Strength" 0.5}
-         sticks_params {"Emission Strength" 0.5}
+   (let [;; styles for materials
+         surface_params {"Emission Strength" 0.5
+                          "Alpha" 0.25}
+         cartoon_params {
+                         ;"Base Color" [1 0 0 1]
+                         "Emission Strength" 0.0
+                         "Alpha" 0.5}
+         sticks_params {"Base Color" [0.15 1 0.15 1]
+                        "Emission Strength" 3
+                        "Emission Color" [0.15 1 0.15 1]}
 
+        ;; styles for components 
+         style_overrides  {:ball+stick  {"Quality" 2
+                                         "As Mesh" true
+                                         "Sphere Radii" 0.4
+                                         "Bond Split" false
+                                         "Bond Find" false
+                                         "Bond Radius" 0.4
+                                         "Color Blur" false
+                                         "Shade Smooth" true}
+                           :cartoon {;"DSSP" true
+                                     "Loop Radius" 1.1}}
+
+        ;; camera location/view
+         view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124] 
+                 [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175] 
+                 [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247] 
+                 [-0.0 0.0 -0.0 1.0]]
+         
          surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
          cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
          sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
-         
+
          arr  (load-pdb "1fap")
          ligand (filter-resname arr "RAP")
-         struct_lig (aget arr ligand)
-
-         ]
-     ;;  (println surface_material)
-     ;;  (set! (.-diffuse_color material) [1 0 0 1])
-     ;;  (set! (.-diffuse_color material) [1 0 0 1])
-     (draw! arr :cartoon {} cartoon_material)
-     (draw! struct_lig :ball+stick {} sticks_material)
+         struct_lig (aget arr ligand)]
+     
+     ;; draw and position
+     (draw! arr :cartoon style_overrides  cartoon_material)
+     (draw! struct_lig :ball+stick style_overrides sticks_material)
      (draw! arr :surface {} surface_material)
-     (set-view! [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124] [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175] [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247] [-0.0 0.0 -0.0 1.0]])
+     (set-view! view) 
+     (bpy.ops.render/render ** :use_viewport true  :write_still true)
+     
      )
-   
+
    (clear-objects)
+
+   
     ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
     ;;      proteins (core/filter-polymer hemoglobin)
     ;;      ligand (core/filter-resname hemoglobin "RAP")
@@ -204,6 +233,7 @@
     ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
     ;;  (render-atomarray struct "cartoon" material)
     ;;  (render-atomarray struct_lig "surface" material_ligand)) 
-   (clear-objects)
+    ;;  (clear-objects)
+   
    )
    
