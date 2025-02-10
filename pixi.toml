@@ -55,6 +55,7 @@ repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env
 bootstrap = "basilisp bootstrap"
 test = "basilisp bootstrap && basilisp test --include-path tests/"
 build = "uv build"
-docs = "quarto preview docs"
+docs-preview = "quarto preview docs"
+docs-build = "quarto render docs"
 
 # rm -rf src/basimol/__pycache__ 
