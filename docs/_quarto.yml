@@ -12,7 +12,7 @@ website:
           - text: "Rapamycin"
             href: examples/Rapamycin.html
           - text: "Basilisp Examples"
-            href: examples/basilisp.html
+            href: basilisp.html
 
     right:
       - icon: github
