@@ -17,7 +17,7 @@
  
 
  (defn say-hello [] "hello")
- 
+
  (defn auto-set-camera [] #_TODO "auto set the view")
  
 
@@ -67,7 +67,7 @@
                 styles (get global-styles style-key)]
             (doseq [[key value] styles]
               (when (= input-name key)
-                (println input " " key " " value "")
+                ;; (println input " " key " " value "")
                 (python/setattr input "default_value" value))))))
 
            ;; Set the material in the node's Material input 
@@ -298,5 +298,11 @@
    (println (get-view))
 
    (println (sys/path))
+
+   bpy.context.scene.render.filepath = '/tmp/output.png'
+   bpy.ops.render.render(use_viewport=True, write_still=True)
+
+
+   
    )
    
