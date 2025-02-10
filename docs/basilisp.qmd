@@ -1,0 +1,42 @@
+---
+title: "basilisp"
+jupyter: "basilisp"
+allow_errors: true
+---
+
+
+# Basilisp
+
+ [Basilisp](https://basilisp.readthedocs.io/en/latest/) is a hosted list on python in the spirit of clojure. This is waht it looks like
+
+```{clojure}
+( + 1 1)
+```
+
+
+This is what imports look like. We can use libraries found on the system's path.
+
+```{clojure}
+(import [os.path :as path])
+(path/exists "test.txt") 
+```
+
+Pythons  `builtins` are available in the `python/` namespace. 
+
+```{clojure}
+(python/abs -1)
+```
+
+We can use libraries found on the system's path.
+
+```{clojure}
+(import sys)
+sys/path
+```
+
+
+```{clojure}
+(require '[basimol.core :as bc])
+(bc/get-view)
+```
+
