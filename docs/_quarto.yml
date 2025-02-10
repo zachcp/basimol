@@ -7,11 +7,12 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
       - text: "Examples"
         menu:
           - text: "Rapamycin"
             href: examples/Rapamycin.html
+          - text: "Basilisp Examples"
+            href: examples/basilisp.html
 
     right:
       - icon: github
