@@ -4,24 +4,32 @@ jupyter: "basilisp"
 allow_errors: true
 ---
 
-This is a Quarto website.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+# Basilisp
 
-
+ Basilisp](https://basilisp.readthedocs.io/en/latest/) is a hosted list on python in the spirit of clojure. This is waht it looks like
 
 ```{clojure}
 ( + 1 1)
 ```
 
 
+This is what imports look like.
+
 ```{clojure}
-;; (import [basimol.core :as core])
-(python/abs -1)
 (import [os.path :as path])
+(python/abs -1)
 (path/exists "test.txt") 
 ```
 
+
+We can use libraries found on the system's path.
+
+```{clojure}
+(import [os.path :as path])
+(python/abs -1)
+(path/exists "test.txt") 
+```
 
 
 ```{clojure}
