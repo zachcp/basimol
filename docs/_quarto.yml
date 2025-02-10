@@ -10,7 +10,7 @@ website:
       - about.qmd
       - text: "Examples"
         menu:
-          - text: "Rapmycin"
+          - text: "Rapamycin"
             href: examples/rapamycin.html
 
     right:
