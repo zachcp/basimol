@@ -8,9 +8,18 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
+      - text: "Examples"
+        menu:
+          - text: "Rapamycin"
+            href: examples/rapamycin.html
+
+    right:
+      - icon: github
+        href: https://github.com/zachcp/basimol
 
 format:
   html:
+    highlight-style: github
     theme:
       - cosmo
       - brand

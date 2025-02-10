@@ -1,0 +1,80 @@
+---
+title: "Rapamycin"
+jupyter: "basilisp"
+---
+
+
+# Example 01
+
+lets display Rapamycin 
+
+
+```{clojure}
+;; Blender Import and Basimol Import
+(import bpy)
+(import IPython)
+(require '[basimol.core :as bc])
+
+
+;; setup the scene. we will save to a file.
+(set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
+(set! (.. bpy -context -scene -render -filepath) "/tmp/output.png")
+(bc/clear-objects)
+
+;; define materials and selections and then put it all together
+(let [
+    ;; styles for materials. its Just data....
+    surface_params {
+        "Emission Strength" 0.5
+        "Alpha" 0.25}
+    cartoon_params {
+        "Emission Strength" 0.0
+        "Alpha" 0.5}
+    sticks_params {
+        "Base Color" [0.15 1 0.15 1]
+        "Emission Strength" 3
+        "Emission Color" [0.15 1 0.15 1]}
+
+    ;; styles for components 
+    style_overrides 
+        {:ball+stick  
+            {"Quality" 2
+            "As Mesh" true
+            "Sphere Radii" 0.4
+            "Bond Split" false
+            "Bond Find" false
+            "Bond Radius" 0.4
+            "Color Blur" false
+            "Shade Smooth" true}
+        :cartoon {
+            ;"DSSP" true
+            "Loop Radius" 1.1}}
+
+    ;; camera location/view.
+    ;; from (bc/get-view)
+    view  [
+        [0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
+        [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
+        [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
+        [-0.0 0.0 -0.0 1.0]]
+
+    surface_material (bc/create-basic-material (str (gensym)) (merge bc/bsdf-principled-defaults surface_params))
+    cartoon_material (bc/create-basic-material (str (gensym)) (merge bc/bsdf-principled-defaults cartoon_params))
+    sticks_material (bc/create-basic-material (str (gensym)) (merge bc/bsdf-principled-defaults sticks_params))
+
+    arr  (bc/load-pdb "1fap")
+    ligand (bc/filter-resname arr "RAP")
+    struct_lig (aget arr ligand)]
+
+    ;; draw and position
+    (bc/draw! arr :cartoon style_overrides  cartoon_material)
+    (bc/draw! struct_lig :ball+stick style_overrides sticks_material)
+    (bc/draw! arr :surface {} surface_material)
+    (bc/set-view! view)
+
+    (bpy.ops.render/render **  :write_still true))
+
+;; for ipython display
+(IPython.display/display
+    (IPython.display/Image "/tmp/output.png"))
+```
