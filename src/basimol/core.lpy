@@ -1,8 +1,8 @@
 (ns basimol.core
    (:import bpy
-            builtins
             databpy
             mathutils
+            sys
             [molecularnodes.entities.molecule.molecule :as molecule]
             [molecularnodes.download :as download]
             [molecularnodes.blender.nodes  :as bl_nodes]
@@ -16,6 +16,8 @@
 
  
 
+ (defn say-hello [] "hello")
+ 
  (defn auto-set-camera [] #_TODO "auto set the view")
  
 
@@ -45,7 +47,7 @@
           (doseq [[key value] styles]
             (when (= input-name key)
               ;;  (println input " " key " " value "")
-              (builtins/setattr input "default_value" value))))))
+              (python/setattr input "default_value" value))))))
     mat))
  
 
@@ -66,7 +68,7 @@
             (doseq [[key value] styles]
               (when (= input-name key)
                 (println input " " key " " value "")
-                (builtins/setattr input "default_value" value))))))
+                (python/setattr input "default_value" value))))))
 
            ;; Set the material in the node's Material input 
       (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
@@ -173,9 +175,8 @@
 
    (let [;; styles for materials
          surface_params {"Emission Strength" 0.5
-                          "Alpha" 0.25}
-         cartoon_params {
-                         ;"Base Color" [1 0 0 1]
+                         "Alpha" 0.25}
+         cartoon_params {;"Base Color" [1 0 0 1]
                          "Emission Strength" 0.0
                          "Alpha" 0.5}
          sticks_params {"Base Color" [0.15 1 0.15 1]
@@ -195,11 +196,11 @@
                                      "Loop Radius" 1.1}}
 
         ;; camera location/view
-         view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124] 
-                 [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175] 
-                 [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247] 
+         view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
+                 [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
+                 [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
                  [-0.0 0.0 -0.0 1.0]]
-         
+
          surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
          cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
          sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
@@ -207,19 +208,17 @@
          arr  (load-pdb "1fap")
          ligand (filter-resname arr "RAP")
          struct_lig (aget arr ligand)]
-     
+
      ;; draw and position
      (draw! arr :cartoon style_overrides  cartoon_material)
      (draw! struct_lig :ball+stick style_overrides sticks_material)
      (draw! arr :surface {} surface_material)
-     (set-view! view) 
-     (bpy.ops.render/render ** :use_viewport true  :write_still true)
-     
-     )
+     (set-view! view)
+     (bpy.ops.render/render ** :use_viewport true  :write_still true))
 
    (clear-objects)
 
-   
+
     ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
     ;;      proteins (core/filter-polymer hemoglobin)
     ;;      ligand (core/filter-resname hemoglobin "RAP")
@@ -234,6 +233,70 @@
     ;;  (render-atomarray struct "cartoon" material)
     ;;  (render-atomarray struct_lig "surface" material_ligand)) 
     ;;  (clear-objects)
+
+
+   ;; setup blender
+   ;; https://www.blendernation.com/2024/07/20/where-has-bloom-gone-in-blender-4-2/
+   ;; use composigint and add nocdes:
+   ;; add a node between render layers adn composite
+   ;; set the compositiing type to Bloom
+
    
+   ;; Vancomycin: 1fvm
+   ;; Semaglutide
+
+
+   
+
+
+   (let [;; styles for materials
+          surface_params {"Emission Strength" 0.5
+                          "Alpha" 0.25}
+          cartoon_params {;"Base Color" [1 0 0 1]
+                          "Emission Strength" 0.0
+                          "Alpha" 0.8}
+          sticks_params {"Base Color" [0.15 1 0.15 1]
+                         "Emission Strength" 3
+                         "Emission Color" [0.15 1 0.15 1]}
+   
+           ;; styles for components 
+          style_overrides  {:ball+stick  {"Quality" 2
+                                          "As Mesh" true
+                                          "Sphere Radii" 0.4
+                                          "Bond Split" false
+                                          "Bond Find" false
+                                          "Bond Radius" 0.4
+                                          "Color Blur" false
+                                          "Shade Smooth" true}
+                            :cartoon {"DSSP" true
+                                      "Loop Radius" 1.0}}
+   
+           ;; camera location/view
+          view   [[0.2486901730298996 0.24742034077644348 -0.9364489316940308 -1.804543137550354]
+                   [-0.9685831069946289 0.06352568417787552 -0.24043984711170197 -0.3880183696746826] 
+                   [-1.0803344139276305e-06 0.9668235778808594 0.25544533133506775 0.5141353011131287] 
+                   [-0.0 0.0 -0.0 1.0]]
+   
+          surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+          cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+          sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
+   
+          arr  (load-pdb "7xbu")
+          ligand (filter-resname arr "MYN")
+          struct_lig (aget arr ligand)]
+   
+        ;; draw and position
+      (draw! arr :cartoon style_overrides  cartoon_material)
+      (draw! struct_lig :ball+stick style_overrides sticks_material)
+      ;; (draw! arr :surface {} surface_material)
+      (set-view! view)
+      (bpy.ops.render/render ** :use_viewport true  :write_still true))
+
+   (clear-objects)
+
+   (set-view! (get-view))
+   (println (get-view))
+
+   (println (sys/path))
    )
    

@@ -1,0 +1,48 @@
+---
+title: "basimol"
+jupyter: "basilisp"
+allow_errors: true
+---
+
+This is a Quarto website.
+
+To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+
+
+
+```{clojure}
+( + 1 1)
+```
+
+
+```{clojure}
+;; (import [basimol.core :as core])
+(python/abs -1)
+(import [os.path :as path])
+(path/exists "test.txt") 
+```
+
+
+
+```{clojure}
+;; (require [basimol :as core])
+(require '[basimol.core :as bc])
+(bc/get-view)
+;; core
+;; core
+;; 
+;; (require '[basimol.core :as core])
+;; core
+;; (require '[basilisp-blender.bpy-utils :as bb])
+;; (require '[basilisp-blender.utils :as bbu])
+;; (import basimol)
+;; basimol
+;; bbu
+;; core
+```
+
+
+```{clojure}
+(import sys)
+sys/path
+```

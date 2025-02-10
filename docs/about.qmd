@@ -1,0 +1,18 @@
+---
+title: "About"
+jupyter: "blender"
+---
+
+About this site
+
+
+```{python}
+import bpy
+bpy.ops.mesh.primitive_monkey_add(size=2.5, location=(0, 0, 0))
+```
+
+
+```{python}
+import bpy
+bpy.ops.mesh.primitive_monkey_add(size=5, location=(2, 2, 2))
+```
