@@ -293,16 +293,8 @@
       (bpy.ops.render/render ** :use_viewport true  :write_still true))
 
    (clear-objects)
-
    (set-view! (get-view))
    (println (get-view))
-
-   (println (sys/path))
-
-   bpy.context.scene.render.filepath = '/tmp/output.png'
-   bpy.ops.render.render(use_viewport=True, write_still=True)
-
-
    
    )
    

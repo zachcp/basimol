@@ -14,12 +14,14 @@ lets display Rapamycin
 (import bpy)
 (import IPython)
 (require '[basimol.core :as bc])
-(require '[basilisp.string :as str])
 
+
+;; setup the scene. we will save to a file.
 (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
 (set! (.. bpy -context -scene -render -filepath) "/tmp/output.png")
 (bc/clear-objects)
 
+;; define materials and selections and then put it all together
 (let [
     ;; styles for materials. its Just data....
     surface_params {
@@ -48,11 +50,13 @@ lets display Rapamycin
             ;"DSSP" true
             "Loop Radius" 1.1}}
 
-    ;; camera location/view
-    view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
-            [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
-            [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
-            [-0.0 0.0 -0.0 1.0]]
+    ;; camera location/view.
+    ;; from (bc/get-view)
+    view  [
+        [0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
+        [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
+        [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
+        [-0.0 0.0 -0.0 1.0]]
 
     surface_material (bc/create-basic-material (str (gensym)) (merge bc/bsdf-principled-defaults surface_params))
     cartoon_material (bc/create-basic-material (str (gensym)) (merge bc/bsdf-principled-defaults cartoon_params))
@@ -70,10 +74,7 @@ lets display Rapamycin
 
     (bpy.ops.render/render **  :write_still true))
 
-```
-
-
-```{clojure}
+;; for ipython display
 (IPython.display/display
     (IPython.display/Image "/tmp/output.png"))
 ```
