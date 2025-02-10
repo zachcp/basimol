@@ -9,6 +9,9 @@ jupyter: "basilisp"
 lets display Rapamycin 
 
 
+![](./rapamyin.png)
+
+
 ```clojure
 ;; Blender Import and Basimol Import
 (import bpy)

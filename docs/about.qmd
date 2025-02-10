@@ -1,6 +1,0 @@
----
-title: "About"
-jupyter: "basilisp"
----
-
-About this site
