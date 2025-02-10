@@ -4,7 +4,7 @@ channels = [
   "https://prefix.dev/pixi-build-backends",
   "https://prefix.dev/conda-forge",
 ]
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
 
@@ -18,9 +18,8 @@ numpy = "<2.0"
 ipython = "*"
 pip = "*"
 pytest = "*"
-quarto = ">=1.6.40,<2"
 jupyter = ">=1.1.1,<2"
-
+quarto = ">=1.6.40,<2"
 
 
 [pypi-dependencies]
@@ -28,6 +27,7 @@ basilisp = "*"
 basilisp-blender = "*"
 basilisp-kernel = "*"
 biotite = "*"
+blender_notebook = "*"
 bpy = "*"
 databpy = "*"
 molecularnodes = "*"
@@ -51,9 +51,10 @@ python = "==3.11"
 
 [tasks] 
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.3/python"
-repl = "basilisp bootstrap && /Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
 bootstrap = "basilisp bootstrap"
 test = "basilisp bootstrap && basilisp test --include-path tests/"
 build = "uv build"
-docs = "basilisp bootstrap && quarto preview docs"
+docs = "quarto preview docs"
 
+# rm -rf src/basimol/__pycache__ 
