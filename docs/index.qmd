@@ -25,20 +25,8 @@ To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
 
 
 ```{clojure}
-;; (require [basimol :as core])
-(require '[basimol.core :as bc])
-(bc/get-view)
-;; core
-;; core
-;; 
-;; (require '[basimol.core :as core])
-;; core
-;; (require '[basilisp-blender.bpy-utils :as bb])
-;; (require '[basilisp-blender.utils :as bbu])
-;; (import basimol)
-;; basimol
-;; bbu
-;; core
+;; (require '[basimol.core :as bc])
+;; (bc/get-view)
 ```
 
 
