@@ -9,12 +9,11 @@ jupyter: "basilisp"
 lets display Rapamycin 
 
 
-```{clojure}
+```clojure
 ;; Blender Import and Basimol Import
 (import bpy)
 (import IPython)
 (require '[basimol.core :as bc])
-
 
 ;; setup the scene. we will save to a file.
 (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
