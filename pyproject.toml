@@ -2,19 +2,21 @@
 name = "basimol"
 version = "0.1.0"
 description = "Evaling Molecular Nodes in Blender"
-authors = [{name = "Zachary Charlop-Powers", email = "zach.charlop.powers@gmail.com"}]
+authors = [
+    { name = "Zachary Charlop-Powers", email = "zach.charlop.powers@gmail.com" },
+]
 requires-python = "== 3.11"
 dependencies = [
     "basilisp",
     "basilisp-blender",
+    "basilisp-kernel",
     "biotite",
+    "blender_notebook",
     "bpy",
     "databpy",
-    "molecularnodes"
+    "molecularnodes>=4.4.3",
 ]
-packages = [
-    { include = "basimol", from = "src" },
-]
+packages = [{ include = "basimol", from = "src" }]
 
 [build-system]
 build-backend = "hatchling.build"
@@ -22,3 +24,51 @@ requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/basimol"]
+
+[tool.pixi.workspace]
+channels = [
+    "conda-forge",
+    "https://prefix.dev/pixi-build-backends",
+    "https://prefix.dev/conda-forge",
+]
+platforms = ["osx-arm64", "linux-64"]
+preview = ["pixi-build"]
+
+[tool.pixi.dependencies]
+python = "==3.11"
+basimol = { path = "." }
+ffmpeg-python = "*"
+ffmpeg = "*"
+opencv = "*"
+numpy = "<2.0"
+ipython = "*"
+pip = "*"
+pytest = "*"
+jupyter = ">=1.1.1,<2"
+quarto = ">=1.6.40,<2"
+
+[tool.pixi.pypi-dependencies]
+# Core dependencies are already listed in project.dependencies above
+
+[tool.pixi.package]
+name = "basimol"
+version = "0.1.0"
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "*" }
+
+[tool.pixi.package.host-dependencies]
+hatchling = "==1.26.3"
+python = "==3.11"
+
+[tool.pixi.package.run-dependencies]
+python = "==3.11"
+
+[tool.pixi.tasks]
+remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.5/python"
+repl = "/Applications/Blender.app/Contents/MacOS/Blender --python-use-system-env --python scripts/start_nrepl.py"
+bootstrap = "basilisp bootstrap"
+test = "basilisp bootstrap && basilisp test --include-path tests/"
+build = "uv build"
+docs-preview = "quarto preview docs"
+docs-build = "quarto render docs"
