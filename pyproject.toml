@@ -10,11 +10,14 @@ dependencies = [
     "basilisp",
     "basilisp-blender",
     "basilisp-kernel",
-    "biotite",
     "blender_notebook",
-    "bpy",
-    "databpy",
     "molecularnodes>=4.4.3",
+    "ffmpeg-python",
+    "opencv-python",
+    "numpy<2.0",
+    "ipython",
+    "pytest",
+    "jupyter>=1.1.1,<2",
 ]
 
 
@@ -26,43 +29,18 @@ requires = ["hatchling"]
 packages = ["src/basimol"]
 
 [tool.pixi.workspace]
-channels = [
-    "conda-forge",
-    "https://prefix.dev/pixi-build-backends",
-    "https://prefix.dev/conda-forge",
-]
+channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
-preview = ["pixi-build"]
 
 [tool.pixi.dependencies]
 python = "==3.11"
-basimol = { path = "." }
-ffmpeg-python = "*"
-ffmpeg = "*"
-opencv = "*"
-numpy = "<2.0"
-ipython = "*"
 pip = "*"
-pytest = "*"
-jupyter = ">=1.1.1,<2"
+ffmpeg = "*"
 quarto = ">=1.6.40,<2"
 
 [tool.pixi.pypi-dependencies]
-# Core dependencies are already listed in project.dependencies above
+basimol = { path = ".", editable = true }
 
-[tool.pixi.package]
-name = "basimol"
-version = "0.1.0"
-
-[tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "*" }
-
-[tool.pixi.package.host-dependencies]
-hatchling = "==1.26.3"
-python = "==3.11"
-
-[tool.pixi.package.run-dependencies]
-python = "==3.11"
 
 [tool.pixi.tasks]
 remove = "rm -rf /Applications/Blender.app/Contents/Resources/4.5/python"
