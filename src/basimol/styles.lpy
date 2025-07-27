@@ -1,13 +1,14 @@
 (ns basimol.styles
-  (:require  [molecularnodes.nodes.styles :as styles]))
+  (:import  [molecularnodes.nodes.styles :as styles])
+  (:require [basilisp.string :as string]))
 
-(defn- kebab->snake [k]
-  (-> k name (clojure.string/replace "-" "_") keyword))
 
-(defn- apply-style [style-fn defaults opts]
-  (let [merged-opts (merge defaults opts)
-        snake-case-opts (mapcat (fn [[k v]] [(kebab->snake k) v]) merged-opts)]
-    (apply style-fn snake-case-opts)))
+(defn- merge-and-snake-case [defaults opts]
+  (->> opts
+       (merge defaults)
+       (map (fn [[k v]] [(kebab->snake k) v]))
+       (into {})))
+
 
 (def ^:private ribbon-defaults
   {:quality 3
@@ -22,36 +23,6 @@
    :base-realize false
    :uv-map false
    :u-component nil})
-
-(defn ribbon  [& {:as opts}]
-  (let [{:keys [quality
-                color-blur
-                shade-smooth
-                backbone-smoothing
-                backbone-threshold
-                base-scale
-                backbone-radius
-                backbone-shape
-                base-resolution
-                base-realize
-                uv-map
-                u-component]}
-        (merge ribbon-defaults opts)]
-    (styles/StyleRibbon :quality quality
-                        :color_blur color-blur
-                        :shade_smooth shade-smooth
-                        :backbone_smoothing backbone-smoothing
-                        :backbone_threshold backbone-threshold
-                        :base_scale base-scale
-                        :backbone_radius backbone-radius
-                        :backbone_shape backbone-shape
-                        :base_resolution base-resolution
-                        :base_realize base-realize
-                        :uv_map uv-map
-                        :u_component u-component)))
-
-(defn ribbon-short [& {:as opts}]
-  (apply-style styles/StyleRibbon ribbon-defaults opts))
 
 (def ^:private cartoon-defaults
   {:quality 2
@@ -70,39 +41,6 @@
    :color-blur true
    :shade-smooth true})
 
-(defn cartoon [& {:as opts}]
-  (let [{:keys [quality
-                dssp
-                cylinders
-                arrows
-                rounded
-                thickness
-                width
-                loop-radius
-                smoothing
-                backbone-shape
-                backbone-radius
-                base-shape
-                base-realize
-                color-blur
-                shade-smooth]}
-        (merge cartoon-defaults opts)]
-    (styles/StyleCartoon :quality quality
-                         :dssp dssp
-                         :cylinders cylinders
-                         :arrows arrows
-                         :rounded rounded
-                         :thickness thickness
-                         :width width
-                         :loop_radius loop-radius
-                         :smoothing smoothing
-                         :backbone_shape backbone-shape
-                         :backbone_radius backbone-radius
-                         :base_shape base-shape
-                         :base_realize base-realize
-                         :color_blur color-blur
-                         :shade_smooth shade-smooth)))
-
 (def ^:private ball-and-stick-defaults
   {:quality 2
    :geometry "Instance"
@@ -113,58 +51,17 @@
    :color-blur false
    :shade-smooth true})
 
-(defn ball-and-stick [& {:as opts}]
-  (let [{:keys [quality
-                geometry
-                sphere-radii
-                bond-split
-                bond-find
-                bond-radius
-                color-blur
-                shade-smooth]}
-        (merge ball-and-stick-defaults opts)]
-    (styles/StyleBallandStick :quality quality
-                              :geometry geometry
-                              :sphere_radii sphere-radii
-                              :bond_split bond-split
-                              :bond_find bond-find
-                              :bond_radius bond-radius
-                              :color_blur color-blur
-                              :shade_smooth shade-smooth)))
-
 (def ^:private spheres-defaults
   {:geometry "Point"
    :radii 0.8
    :sphere-subdivisions 2
    :shade-smooth true})
 
-(defn spheres [& {:as opts}]
-  (let [{:keys [geometry
-                radii
-                sphere-subdivisions
-                shade-smooth]}
-        (merge spheres-defaults opts)]
-    (styles/Spheres :geometry geometry
-                    :radii radii
-                    :sphere_subdivisions sphere-subdivisions
-                    :shade_smooth shade-smooth)))
-
 (def ^:private sticks-defaults
   {:quality 3
    :radius 0.2
    :color-blur false
    :shade-smooth true})
-
-(defn sticks [& {:as opts}]
-  (let [{:keys [quality
-                radius
-                color-blur
-                shade-smooth]}
-        (merge sticks-defaults opts)]
-    (styles/StyleSticks :quality quality
-                        :radius radius
-                        :color_blur color-blur
-                        :shade_smooth shade-smooth)))
 
 (def ^:private surface-defaults
   {:quality 3
@@ -177,23 +74,26 @@
    :blur 2
    :shade-smooth true})
 
+(defn ribbon [& {:as opts}]
+  (styles/StyleRibbon (merge-and-snake-case ribbon-defaults opts)))
+
+(defn cartoon [& {:as opts}]
+  (styles/StyleCartoon (merge-and-snake-case cartoon-defaults opts)))
+
+(defn ball-and-stick [& {:as opts}]
+  (styles/StyleBallandStick (merge-and-snake-case ball-and-stick-defaults opts)))
+
+(defn spheres [& {:as opts}]
+  (styles/StyleSpheres (merge-and-snake-case spheres-defaults opts)))
+
+(defn sticks [& {:as opts}]
+  (styles/StyleSticks (merge-and-snake-case sticks-defaults opts)))
+
+
 (defn surface [& {:as opts}]
-  (let [{:keys [quality
-                scale-radii
-                probe-size
-                relaxation-steps
-                separate
-                group-id
-                color-source
-                blur
-                shade-smooth]}
-        (merge surface-defaults opts)]
-    (styles/StyleSurface :quality quality
-                         :scale_radii scale-radii
-                         :probe_size probe-size
-                         :relaxation_steps relaxation-steps
-                         :separate separate
-                         :group_id group-id
-                         :color_source color-source
-                         :blur blur
-                         :shade_smooth shade-smooth)))
+  (styles/StyleSurface (merge-and-snake-case surface-defaults opts)))
+
+(comment
+
+  
+  )
