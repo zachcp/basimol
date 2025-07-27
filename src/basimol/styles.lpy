@@ -42,34 +42,147 @@
                         :uv_map uv-map
                         :u_component u-component)))
 
-;; styles/StyleCartoon
-;;     def __init__(
-;; self,
-;; quality: int = 2,
-;; dssp: bool = False,
-;; cylinders: bool = False,
-;; arrows: bool = True,
-;; rounded: bool = False,
-;; thickness: float = 0.6,
-;; width: float = 2.2,
-;; loop_radius: float = 0.3,
-;; smoothing: float = 0.5,
-;; backbone_shape: str = "Cylinder",  # enum?
-;; backbone_radius: float = 2.0,
-;; base_shape: str = "Rectangle",  # enum?
-;; base_realize: bool = False,
-;; color_blur: bool = True,
-;; shade_smooth: bool = True,
-(defn cartoon [])
+(def ^:private cartoon-defaults
+  {:quality 2
+   :dssp false
+   :cylinders false
+   :arrows true
+   :rounded false
+   :thickness 0.6
+   :width 2.2
+   :loop-radius 0.3
+   :smoothing 0.5
+   :backbone-shape "Cylinder"
+   :backbone-radius 2.0
+   :base-shape "Rectangle"
+   :base-realize false
+   :color-blur true
+   :shade-smooth true})
 
-;; styles/'StyleBallandStick
-(defn ball-and-stick [])
+(defn cartoon [& {:as opts}]
+  (let [{:keys [quality
+                dssp
+                cylinders
+                arrows
+                rounded
+                thickness
+                width
+                loop-radius
+                smoothing
+                backbone-shape
+                backbone-radius
+                base-shape
+                base-realize
+                color-blur
+                shade-smooth]}
+        (merge cartoon-defaults opts)]
+    (styles/StyleCartoon :quality quality
+                         :dssp dssp
+                         :cylinders cylinders
+                         :arrows arrows
+                         :rounded rounded
+                         :thickness thickness
+                         :width width
+                         :loop_radius loop-radius
+                         :smoothing smoothing
+                         :backbone_shape backbone-shape
+                         :backbone_radius backbone-radius
+                         :base_shape base-shape
+                         :base_realize base-realize
+                         :color_blur color-blur
+                         :shade_smooth shade-smooth)))
 
-;; styles/'StyleBallandStick
-(defn spheres [])
+(def ^:private ball-and-stick-defaults
+  {:quality 2
+   :geometry "Instance"
+   :sphere-radii 0.3
+   :bond-split false
+   :bond-find false
+   :bond-radius 0.3
+   :color-blur false
+   :shade-smooth true})
 
-;; styles/StyleSticks
-(defn sticks [])
+(defn ball-and-stick [& {:as opts}]
+  (let [{:keys [quality
+                geometry
+                sphere-radii
+                bond-split
+                bond-find
+                bond-radius
+                color-blur
+                shade-smooth]}
+        (merge ball-and-stick-defaults opts)]
+    (styles/StyleBallandStick :quality quality
+                              :geometry geometry
+                              :sphere_radii sphere-radii
+                              :bond_split bond-split
+                              :bond_find bond-find
+                              :bond_radius bond-radius
+                              :color_blur color-blur
+                              :shade_smooth shade-smooth)))
 
-;; styles/'StyleBallandStick
-(defn surface [])
+(def ^:private spheres-defaults
+  {:geometry "Point"
+   :radii 0.8
+   :sphere-subdivisions 2
+   :shade-smooth true})
+
+(defn spheres [& {:as opts}]
+  (let [{:keys [geometry
+                radii
+                sphere-subdivisions
+                shade-smooth]}
+        (merge spheres-defaults opts)]
+    (styles/Spheres :geometry geometry
+                    :radii radii
+                    :sphere_subdivisions sphere-subdivisions
+                    :shade_smooth shade-smooth)))
+
+(def ^:private sticks-defaults
+  {:quality 3
+   :radius 0.2
+   :color-blur false
+   :shade-smooth true})
+
+(defn sticks [& {:as opts}]
+  (let [{:keys [quality
+                radius
+                color-blur
+                shade-smooth]}
+        (merge sticks-defaults opts)]
+    (styles/StyleSticks :quality quality
+                        :radius radius
+                        :color_blur color-blur
+                        :shade_smooth shade-smooth)))
+
+(def ^:private surface-defaults
+  {:quality 3
+   :scale-radii 1.5
+   :probe-size 1.0
+   :relaxation-steps 10
+   :separate "chain_id"
+   :group-id 0
+   :color-source "Alpha Carbon"
+   :blur 2
+   :shade-smooth true})
+
+(defn surface [& {:as opts}]
+  (let [{:keys [quality
+                scale-radii
+                probe-size
+                relaxation-steps
+                separate
+                group-id
+                color-source
+                blur
+                shade-smooth]}
+        (merge surface-defaults opts)]
+    (styles/StyleSurface :quality quality
+                         :scale_radii scale-radii
+                         :probe_size probe-size
+                         :relaxation_steps relaxation-steps
+                         :separate separate
+                         :group_id group-id
+                         :color_source color-source
+                         :blur blur
+                         :shade_smooth shade-smooth)))
