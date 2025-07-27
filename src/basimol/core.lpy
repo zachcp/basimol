@@ -3,7 +3,6 @@
            databpy
            mathutils
            [molecularnodes :as mn]
-           [molecularnodes.entities.molecule.base :as mbase]
            [molecularnodes.download :as download]
            [molecularnodes.nodes  :as bl_nodes]
            [numpy :as np]
@@ -12,14 +11,14 @@
            [biotite.structure :as struct]
            [biotite.structure.bonds :as bonds])
   (:require [basilisp.string :as str]
-            [basimol.styles :refer [bsdf-principled-defaults default-styles]]
-            [basimol.materials :refer [create-material]]))
+            [basimol.materials :as materials]))
 
 (defn auto-set-camera [] #_TODO "auto set the view")
 
 (defn- center-array [arr]
   (set! (.-coord arr) (np/subtract  (.-coord arr) (databpy/centre (.-coord arr))))
   arr)
+
 
 ;; Remove Molecules and then the Cube
 (defn clear-objects []
@@ -200,18 +199,18 @@
                 [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
                 [-0.0 0.0 -0.0 1.0]]
 
-        surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
-        cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
-        sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
+;; surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+        ;; cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+        ;; sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
 
         arr  (load-pdb "1fap")
         ligand (filter-resname arr "RAP")
         struct_lig (aget arr ligand)]
 
      ;; draw and position
-    (draw! arr :cartoon style_overrides  cartoon_material)
-    (draw! struct_lig :ball+stick style_overrides sticks_material)
-    (draw! arr :surface {} surface_material)
+    ;; (draw! arr :cartoon style_overrides  cartoon_material)
+    ;; (draw! struct_lig :ball+stick style_overrides sticks_material)
+    ;; (draw! arr :surface {} surface_material)
     (set-view! view)
     (bpy.ops.render/render ** :use_viewport true  :write_still true))
 
@@ -269,17 +268,17 @@
                 [-1.0803344139276305e-06 0.9668235778808594 0.25544533133506775 0.5141353011131287]
                 [-0.0 0.0 -0.0 1.0]]
 
-        surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
-        cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
-        sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
+        ;; surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+        ;; cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+        ;; sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
 
         arr  (load-pdb "7xbu")
         ligand (filter-resname arr "MYN")
         struct_lig (aget arr ligand)]
 
      ;; draw and position
-    (draw! arr :cartoon style_overrides  cartoon_material)
-    (draw! struct_lig :ball+stick style_overrides sticks_material)
+    ;; (draw! arr :cartoon style_overrides  cartoon_material)
+    ;; (draw! struct_lig :ball+stick style_overrides sticks_material)
      ;; (draw! arr :surface {} surface_material)
     (set-view! view)
     (bpy.ops.render/render ** :use_viewport true  :write_still true))
@@ -287,3 +286,4 @@
   (clear-objects)
   (set-view! (get-view))
   (println (get-view)))
+

@@ -1,5 +1,8 @@
 (ns basimol.styles
-  (:import  [molecularnodes.nodes.styles :as styles]))
+  (:import [molecularnodes.nodes.styles :as styles])
+  (:require [basilisp.string :as string]))
+
+(defn kebab->snake [s] (string/replace s #"-" "_"))
 
 (defn- merge-and-snake-case [defaults opts]
   (->> opts
