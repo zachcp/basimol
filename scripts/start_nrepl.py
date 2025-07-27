@@ -1,13 +1,3 @@
-# from basilisp_blender.nrepl import server_start
-# shutdown_fn = server_start(nrepl_port_filepath="<project-root-path>/.nrepl-port")
-#
-# from basilisp_blender.nrepl import server_start
-
-# shutdown_fn = server_start(
-#     nrepl_port_filepath="/Users/zcpowers/Desktop/molnodes/.nrepl-port"
-# )
-
-
 import sys
 import os
 from basilisp_blender.nrepl import server_start
