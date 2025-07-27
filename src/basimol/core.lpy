@@ -2,7 +2,6 @@
   (:import bpy
            databpy
            mathutils
-           sys
            [molecularnodes :as mn]
            [molecularnodes.entities.molecule.base :as mbase]
            [molecularnodes.download :as download]

@@ -1,6 +1,14 @@
 (ns basimol.styles
   (:require  [molecularnodes.nodes.styles :as styles]))
 
+(defn- kebab->snake [k]
+  (-> k name (clojure.string/replace "-" "_") keyword))
+
+(defn- apply-style [style-fn defaults opts]
+  (let [merged-opts (merge defaults opts)
+        snake-case-opts (mapcat (fn [[k v]] [(kebab->snake k) v]) merged-opts)]
+    (apply style-fn snake-case-opts)))
+
 (def ^:private ribbon-defaults
   {:quality 3
    :color-blur false
@@ -41,6 +49,9 @@
                         :base_realize base-realize
                         :uv_map uv-map
                         :u_component u-component)))
+
+(defn ribbon-short [& {:as opts}]
+  (apply-style styles/StyleRibbon ribbon-defaults opts))
 
 (def ^:private cartoon-defaults
   {:quality 2
