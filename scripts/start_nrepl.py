@@ -16,7 +16,7 @@ from basilisp_blender.nrepl import server_start
 def start_nrepl_server():
     project_root = os.getcwd()  # Or specify your project root path
     nrepl_port_file = os.path.join(project_root, ".nrepl-port")
-    shutdown_fn = server_start(nrepl_port_filepath=nrepl_port_file)
+    shutdown_fn = server_start(nrepl_port_filepath=nrepl_port_file, port=7888)
     print(f"nREPL server started. Port file: {nrepl_port_file}")
     return shutdown_fn
 
