@@ -1,15 +1,75 @@
 (ns basimol.styles
-  (:require [clojure.string :as str]
-            [molecularnodes.nodes.styles :as styles]))
+  (:require  [molecularnodes.nodes.styles :as styles]))
 
-(defn ribbon [])
+(def ^:private ribbon-defaults
+  {:quality 3
+   :color-blur false
+   :shade-smooth false
+   :backbone-smoothing 0.5
+   :backbone-threshold 4.5
+   :base-scale [2.5 0.5 7.0]
+   :backbone-radius 2.0
+   :backbone-shape "Cylinder"
+   :base-resolution 4
+   :base-realize false
+   :uv-map false
+   :u-component nil})
 
+(defn ribbon  [& {:as opts}]
+  (let [{:keys [quality
+                color-blur
+                shade-smooth
+                backbone-smoothing
+                backbone-threshold
+                base-scale
+                backbone-radius
+                backbone-shape
+                base-resolution
+                base-realize
+                uv-map
+                u-component]}
+        (merge ribbon-defaults opts)]
+    (styles/StyleRibbon :quality quality
+                        :color_blur color-blur
+                        :shade_smooth shade-smooth
+                        :backbone_smoothing backbone-smoothing
+                        :backbone_threshold backbone-threshold
+                        :base_scale base-scale
+                        :backbone_radius backbone-radius
+                        :backbone_shape backbone-shape
+                        :base_resolution base-resolution
+                        :base_realize base-realize
+                        :uv_map uv-map
+                        :u_component u-component)))
+
+;; styles/StyleCartoon
+;;     def __init__(
+;; self,
+;; quality: int = 2,
+;; dssp: bool = False,
+;; cylinders: bool = False,
+;; arrows: bool = True,
+;; rounded: bool = False,
+;; thickness: float = 0.6,
+;; width: float = 2.2,
+;; loop_radius: float = 0.3,
+;; smoothing: float = 0.5,
+;; backbone_shape: str = "Cylinder",  # enum?
+;; backbone_radius: float = 2.0,
+;; base_shape: str = "Rectangle",  # enum?
+;; base_realize: bool = False,
+;; color_blur: bool = True,
+;; shade_smooth: bool = True,
 (defn cartoon [])
 
+;; styles/'StyleBallandStick
 (defn ball-and-stick [])
 
+;; styles/'StyleBallandStick
 (defn spheres [])
 
+;; styles/StyleSticks
 (defn sticks [])
 
+;; styles/'StyleBallandStick
 (defn surface [])
