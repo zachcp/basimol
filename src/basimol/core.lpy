@@ -3,7 +3,7 @@
             databpy
             mathutils
             sys
-            [molecularnodes.entities.molecule.molecule :as molecule]
+            [molecularnodes.entities.molecule.base :refer [Molecule]]
             [molecularnodes.download :as download]
             [molecularnodes.blender.nodes  :as bl_nodes]
             [numpy :as np]

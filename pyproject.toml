@@ -16,7 +16,7 @@ dependencies = [
     "databpy",
     "molecularnodes>=4.4.3",
 ]
-packages = [{ include = "basimol", from = "src" }]
+
 
 [build-system]
 build-backend = "hatchling.build"
