@@ -1,7 +1,5 @@
 (ns basimol.materials
-  (:import
-   bpy
-   [molecularnodes.nodes.material :as material]))
+  (:import [molecularnodes.nodes.material :as material]))
 
 (defn create-material
   "Create a Blender material from provided shader properties.
@@ -81,7 +79,8 @@
            thin-film-thickness 0.0
            thin-film-ior 1.3}}]
   (material/create_material
-   ** :name name
+   **
+   :name name
    :base_color base-color
    :metallic metallic
    :roughness roughness

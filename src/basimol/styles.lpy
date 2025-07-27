@@ -1,7 +1,5 @@
 (ns basimol.styles
-  (:import  [molecularnodes.nodes.styles :as styles])
-  (:require [basilisp.string :as string]))
-
+  (:import  [molecularnodes.nodes.styles :as styles]))
 
 (defn- merge-and-snake-case [defaults opts]
   (->> opts
@@ -9,91 +7,74 @@
        (map (fn [[k v]] [(kebab->snake k) v]))
        (into {})))
 
-
-(def ^:private ribbon-defaults
-  {:quality 3
-   :color-blur false
-   :shade-smooth false
-   :backbone-smoothing 0.5
-   :backbone-threshold 4.5
-   :base-scale [2.5 0.5 7.0]
-   :backbone-radius 2.0
-   :backbone-shape "Cylinder"
-   :base-resolution 4
-   :base-realize false
-   :uv-map false
-   :u-component nil})
-
-(def ^:private cartoon-defaults
-  {:quality 2
-   :dssp false
-   :cylinders false
-   :arrows true
-   :rounded false
-   :thickness 0.6
-   :width 2.2
-   :loop-radius 0.3
-   :smoothing 0.5
-   :backbone-shape "Cylinder"
-   :backbone-radius 2.0
-   :base-shape "Rectangle"
-   :base-realize false
-   :color-blur true
-   :shade-smooth true})
-
-(def ^:private ball-and-stick-defaults
-  {:quality 2
-   :geometry "Instance"
-   :sphere-radii 0.3
-   :bond-split false
-   :bond-find false
-   :bond-radius 0.3
-   :color-blur false
-   :shade-smooth true})
-
-(def ^:private spheres-defaults
-  {:geometry "Point"
-   :radii 0.8
-   :sphere-subdivisions 2
-   :shade-smooth true})
-
-(def ^:private sticks-defaults
-  {:quality 3
-   :radius 0.2
-   :color-blur false
-   :shade-smooth true})
-
-(def ^:private surface-defaults
-  {:quality 3
-   :scale-radii 1.5
-   :probe-size 1.0
-   :relaxation-steps 10
-   :separate "chain_id"
-   :group-id 0
-   :color-source "Alpha Carbon"
-   :blur 2
-   :shade-smooth true})
-
 (defn ribbon [& {:as opts}]
-  (styles/StyleRibbon (merge-and-snake-case ribbon-defaults opts)))
+  (let [defaults {:quality 3
+                  :color-blur false
+                  :shade-smooth false
+                  :backbone-smoothing 0.5
+                  :backbone-threshold 4.5
+                  :base-scale [2.5 0.5 7.0]
+                  :backbone-radius 2.0
+                  :backbone-shape "Cylinder"
+                  :base-resolution 4
+                  :base-realize false
+                  :uv-map false
+                  :u-component nil}]
+    (styles/StyleRibbon (merge-and-snake-case defaults opts))))
 
 (defn cartoon [& {:as opts}]
-  (styles/StyleCartoon (merge-and-snake-case cartoon-defaults opts)))
+  (let [defaults {:quality 2
+                  :dssp false
+                  :cylinders false
+                  :arrows true
+                  :rounded false
+                  :thickness 0.6
+                  :width 2.2
+                  :loop-radius 0.3
+                  :smoothing 0.5
+                  :backbone-shape "Cylinder"
+                  :backbone-radius 2.0
+                  :base-shape "Rectangle"
+                  :base-realize false
+                  :color-blur true
+                  :shade-smooth true}]
+    (styles/StyleCartoon (merge-and-snake-case defaults opts))))
 
 (defn ball-and-stick [& {:as opts}]
-  (styles/StyleBallandStick (merge-and-snake-case ball-and-stick-defaults opts)))
+  (let [defaults {:quality 2
+                  :geometry "Instance"
+                  :sphere-radii 0.3
+                  :bond-split false
+                  :bond-find false
+                  :bond-radius 0.3
+                  :color-blur false
+                  :shade-smooth true}]
+    (styles/StyleBallandStick (merge-and-snake-case defaults opts))))
 
 (defn spheres [& {:as opts}]
-  (styles/StyleSpheres (merge-and-snake-case spheres-defaults opts)))
+  (let [defaults {:geometry "Point"
+                  :radii 0.8
+                  :sphere-subdivisions 2
+                  :shade-smooth true}]
+    (styles/StyleSpheres (merge-and-snake-case defaults opts))))
 
 (defn sticks [& {:as opts}]
-  (styles/StyleSticks (merge-and-snake-case sticks-defaults opts)))
-
+  (let [defaults {:quality 3
+                  :radius 0.2
+                  :color-blur false
+                  :shade-smooth true}]
+    (styles/StyleSticks (merge-and-snake-case defaults opts))))
 
 (defn surface [& {:as opts}]
-  (styles/StyleSurface (merge-and-snake-case surface-defaults opts)))
+  (let [defaults {:quality 3
+                  :scale-radii 1.5
+                  :probe-size 1.0
+                  :relaxation-steps 10
+                  :separate "chain_id"
+                  :group-id 0
+                  :color-source "Alpha Carbon"
+                  :blur 2
+                  :shade-smooth true}]
+    (styles/StyleSurface (merge-and-snake-case defaults opts))))
 
-(comment
-
-  
-  )
+(comment)

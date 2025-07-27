@@ -31,18 +31,18 @@
       (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
         (.. bpy -data -objects (remove obj ** :do_unlink true))))))
 
-(defn create-basic-material [name stylemap]
-  (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
-        bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
-        styles (merge bsdf-principled-defaults stylemap)]
-    (doseq [input (.-inputs bsdf)]
-      (when-not (= (.-type input) "GEOMETRY")
-        (let [input-name (.-name input)]
-          (doseq [[key value] styles]
-            (when (= input-name key)
-              ;;  (println input " " key " " value "")
-              (python/setattr input "default_value" value))))))
-    mat))
+;; (defn create-basic-material [name stylemap]
+;;   (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
+;;         bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
+;;         styles (merge bsdf-principled-defaults stylemap)]
+;;     (doseq [input (.-inputs bsdf)]
+;;       (when-not (= (.-type input) "GEOMETRY")
+;;         (let [input-name (.-name input)]
+;;           (doseq [[key value] styles]
+;;             (when (= input-name key)
+;;               ;;  (println input " " key " " value "")
+;;               (python/setattr input "default_value" value))))))
+;;     mat))
 
 (defn draw! [arr style-key style-map material]
   "take a collection of states corresponding to frames and generate an output"
