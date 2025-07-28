@@ -1,9 +1,8 @@
 (ns basimol.core
   (:import bpy
            databpy
-           mathutils
-           molecularnodes
-           [molecularnodes :as mn]
+           mathutils 
+           [molecularnodes :as mn :refer [Molecule]]
            [molecularnodes.nodes  :as bl_nodes]
            [numpy :as np]
            [biotite.structure.filter :as filter]
@@ -12,6 +11,7 @@
             [basimol.materials :as materials]
             [basimol.styles :as styles]))
             
+(import [molecularnodes :as molecularnodes])
 
 (defn auto-set-camera [] #_TODO "auto set the view")
 
@@ -125,14 +125,17 @@
           (map vec mat))))))
 
 ;; core loading function. used molnodes code + biotite bond connections.
-(defn load-pdb [code]
-  ^struct/AtomArray
-  (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first)]
-    (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
-    (center-array arr)))
+;; (defn load-pdb [code]
+;;   ^struct/AtomArray
+;;   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first)]
+;;     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
+;;     (center-array arr)))
 
-;; (defn load-pdb [code] 
-;;   (molecularnodes.Molecule/fetch code))
+(defn load-pdb [code] 
+  (let [mol  (molecularnodes.Molecule/fetch code) 
+        arr (.array mol)]  
+    arr))
+  
 
 (defn set-view! [matrix]
   (let [mmat (mathutils/Matrix (vec matrix))
