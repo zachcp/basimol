@@ -2,9 +2,12 @@
   (:import bpy
            databpy
            mathutils
+           molecularnodes
            [molecularnodes :as mn]
            [molecularnodes.nodes  :as bl_nodes]
-           [numpy :as np])
+           [numpy :as np]
+           [biotite.structure.filter :as filter]
+           )
   (:require [basilisp.string :as str]
             [basimol.materials :as materials]
             [basimol.styles :as styles]))
@@ -52,51 +55,51 @@
 ;;         (set! (.-default_value material-input) material)))))
 
 (defn draw! [code style material]
-  (let [mol (mn.Molecule/fetch code)]
+  (let [mol (molecularnodes.Molecule/fetch code)]
     (.add_style mol ** :style style :material material)))
 
 
-;; (defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
+(defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
 
-;; (defn filter-atomname [arr atomname] (= atomname (.get_annotation arr "atom_name")))
+(defn filter-atomname [arr atomname] (= atomname (.get_annotation arr "atom_name")))
 
-;; (defn filter-canonical-amino-acids [arr] (filter/filter_canonical_amino_acids arr))
+(defn filter-canonical-amino-acids [arr] (filter/filter_canonical_amino_acids arr))
 
-;; (defn filter-canonical-nucleotides [arr] (filter/filter_canonical_nucleotides arr))
+(defn filter-canonical-nucleotides [arr] (filter/filter_canonical_nucleotides arr))
 
-;; (defn filter-carbohydrates [arr] (filter/filter_carbohydrates arr))
+(defn filter-carbohydrates [arr] (filter/filter_carbohydrates arr))
 
-;; (defn filter-chain [arr chain] (= chain (.get_annotation arr "chain_id")))
+(defn filter-chain [arr chain] (= chain (.get_annotation arr "chain_id")))
 
-;; (defn filter-element [arr element] (= element (.get_annotation arr "element")))
+(defn filter-element [arr element] (= element (.get_annotation arr "element")))
 
-;; (defn filter-first-altloc [arr] (filter/filter_first_altloc arr))
+(defn filter-first-altloc [arr] (filter/filter_first_altloc arr))
 
-;; (defn filter-hetero [arr] (= true (.get_annotation arr "hetero")))
+(defn filter-hetero [arr] (= true (.get_annotation arr "hetero")))
 
-;; (defn filter-highest-occupancy-altloc [arr] (filter/filter_highest_occupancy_altloc arr))
+(defn filter-highest-occupancy-altloc [arr] (filter/filter_highest_occupancy_altloc arr))
 
-;; (defn filter-inscode [arr inscode] (= inscode (.get_annotation arr "ins_code")))
+(defn filter-inscode [arr inscode] (= inscode (.get_annotation arr "ins_code")))
 
-;; (defn filter-intersection [arr] (filter/filter_intersection arr))
+(defn filter-intersection [arr] (filter/filter_intersection arr))
 
-;; (defn filter-linear-bond-continuity [arr] (filter/filter_linear_bond_continuity arr))
+(defn filter-linear-bond-continuity [arr] (filter/filter_linear_bond_continuity arr))
 
-;; (defn filter-monoatomic-ions [arr] (filter/filter_monoatomic_ions arr))
+(defn filter-monoatomic-ions [arr] (filter/filter_monoatomic_ions arr))
 
-;; (defn filter-nucleotides [arr] (filter/filter_nucleotides arr))
+(defn filter-nucleotides [arr] (filter/filter_nucleotides arr))
 
-;; (defn filter-peptide-backbone [arr] (filter/filter_peptide_backbone arr))
+(defn filter-peptide-backbone [arr] (filter/filter_peptide_backbone arr))
 
-;; (defn filter-phosphate-backbone [arr] (filter/filter_phosphate_backbone arr))
+(defn filter-phosphate-backbone [arr] (filter/filter_phosphate_backbone arr))
 
-;; (defn filter-polymer [arr] (filter/filter_polymer arr))
+(defn filter-polymer [arr] (filter/filter_polymer arr))
 
-;; (defn filter-resid [arr num] (= num (.get_annotation arr "res_id")))
+(defn filter-resid [arr num] (= num (.get_annotation arr "res_id")))
 
-;; (defn filter-resname [arr res_name] (= res_name (.get_annotation arr "res_name")))
+(defn filter-resname [arr res_name] (= res_name (.get_annotation arr "res_name")))
 
-;; (defn filter-solvent [arr] (filter/filter_solvent arr))
+(defn filter-solvent [arr] (filter/filter_solvent arr))
 
 ;; needed to capture the active view
 (defn- get-temp-context-info []
@@ -122,13 +125,14 @@
           (map vec mat))))))
 
 ;; core loading function. used molnodes code + biotite bond connections.
-;; (defn load-pdb [code]
-;;   ^struct/AtomArray
-;;   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first)]
-;;     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
-;;     (center-array arr)))
+(defn load-pdb [code]
+  ^struct/AtomArray
+  (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first)]
+    (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
+    (center-array arr)))
 
-(defn load-pdb [code] (mn.Molecule/fetch code))
+;; (defn load-pdb [code] 
+;;   (molecularnodes.Molecule/fetch code))
 
 (defn set-view! [matrix]
   (let [mmat (mathutils/Matrix (vec matrix))
@@ -148,21 +152,30 @@
   (let [mol (mn.Molecule/load "/Users/zcpowers/MolecularNodesCache/4ozs.pdb")]
     (.add_style mol "cartoon"))
 
+  
   (let [mol (mn.Molecule/load "/Users/zcpowers/MolecularNodesCache/4ozs.pdb")
         mat_squish (mn.material/Squishy)
-        mol_style (styles/cartoon {})
-        ]
-    (.add_style mol mol_style))
-
-  ;;   pearl_mat = mn.material.Material.pearl ()
-  ;; (mn.material/Squishy)
+        mol_style (styles/cartoon {})]
+    (.add_style mol ** :style mol_style))
 
 
+  ;; ribbon is broken for now. not sure why. 
   (let [code "1cbs"
-        style (styles/ribbon)
-        mat (materials/create-material)]
-    
-    (draw! code style mat))
+        styl (styles/cartoon {})
+        mat (materials/create-material :name "test")
+        mol (mn.Molecule/fetch code)] 
+    (println styl) 
+    (println (type styl))
+    (println (dir styl))
+    (println mat) 
+    (.add_style mol ** :style styl :material mat)
+    )
+  
+  (defn draw! [code style material]
+    (let [mol (mn.Molecule/fetch code)]
+      (.add_style mol ** :style style :material material)))
+
+
   
   ;; global setup to write outputs to a file
   (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
