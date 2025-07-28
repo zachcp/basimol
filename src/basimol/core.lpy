@@ -1,300 +1,305 @@
 (ns basimol.core
-   (:import bpy
-            databpy
-            mathutils
-            sys
-            [molecularnodes.entities.molecule.molecule :as molecule]
-            [molecularnodes.download :as download]
-            [molecularnodes.blender.nodes  :as bl_nodes]
-            [numpy :as np]
-            [biotite.structure.io.pdbx :as pdbx]
-            [biotite.structure.filter :as filter]
-            [biotite.structure :as struct]
-            [biotite.structure.bonds :as bonds])
-   (:require [basilisp.string :as str]
-             [basimol.styles :refer [bsdf-principled-defaults default-styles]]))
+  (:import bpy
+           databpy
+           mathutils 
+           [molecularnodes :as mn :refer [Molecule]]
+           [molecularnodes.nodes  :as bl_nodes]
+           [numpy :as np]
+           [biotite.structure.filter :as filter]
+           )
+  (:require [basilisp.string :as str]
+            [basimol.materials :as materials]
+            [basimol.styles :as styles]))
+            
+(import [molecularnodes :as molecularnodes])
 
- 
+(defn auto-set-camera [] #_TODO "auto set the view")
 
- (defn say-hello [] "hello")
+(defn- center-array [arr]
+  (set! (.-coord arr) (np/subtract  (.-coord arr) (databpy/centre (.-coord arr))))
+  arr)
 
- (defn auto-set-camera [] #_TODO "auto set the view")
- 
-
- (defn- center-array [arr]
-   (set! (.-coord arr) (np/subtract  (.-coord arr) (databpy/centre (.-coord arr))))
-   arr)
-   
-
- ;; Remove Molecules and then the Cube
- (defn clear-objects []
-   (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
-     (when mol-collection
-       (doseq [obj (.. mol-collection -objects)]
-         (.. bpy -data -objects (remove obj ** :do_unlink true))))
-     (doseq [obj (.. bpy -data -objects)]
-       (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
-         (.. bpy -data -objects (remove obj ** :do_unlink true))))))
-
- 
-(defn create-basic-material [name stylemap]
-  (let [mat (doto (bpy.data.materials/new name) (-> .-use_nodes (set! true)))
-        bsdf (.. mat -node_tree -nodes (get "Principled BSDF"))
-        styles (merge bsdf-principled-defaults stylemap)]
-    (doseq [input (.-inputs bsdf)]
-      (when-not (= (.-type input) "GEOMETRY")
-        (let [input-name (.-name input)]
-          (doseq [[key value] styles]
-            (when (= input-name key)
-              ;;  (println input " " key " " value "")
-              (python/setattr input "default_value" value))))))
-    mat))
- 
-
- (defn draw! [arr style-key style-map material]
-  "take a collection of states corresponding to frames and generate an output"
-  (let [molname (str (gensym))
-        [obj _] (molecule/_create_object  arr ** :name molname :style (name style-key))
-        _ (bl_nodes/create_starting_node_tree obj ** :style (name style-key))
-        modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
-        node-tree (.-node_group modifier)
-        nodes (.-nodes node-tree)
-        global-styles (merge default-styles style-map)]
-    (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
-      (doseq [input (.-inputs style-node)]
-        (when (not= (.-type input) "GEOMETRY")
-          (let [input-name (.-name input)
-                styles (get global-styles style-key)]
-            (doseq [[key value] styles]
-              (when (= input-name key)
-                ;; (println input " " key " " value "")
-                (python/setattr input "default_value" value))))))
-
-           ;; Set the material in the node's Material input 
-      (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
-        (.. obj -data -materials (append material))
-        (set! (.-default_value material-input) material)))))
-  
+;; Remove Molecules and then the Cube
+(defn clear-objects []
+  (let [mol-collection (.. bpy -data -collections (get "Molecular Nodes"))]
+    (when mol-collection
+      (doseq [obj (.. mol-collection -objects)]
+        (.. bpy -data -objects (remove obj ** :do_unlink true))))
+    (doseq [obj (.. bpy -data -objects)]
+      (when (and (= "MESH" (.-type obj)) (not= "Camera" (.-name obj)))
+        (.. bpy -data -objects (remove obj ** :do_unlink true))))))
 
 
- (defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
- 
- (defn filter-atomname [arr atomname] (= atomname (.get_annotation arr "atom_name")))
- 
- (defn filter-canonical-amino-acids [arr] (filter/filter_canonical_amino_acids arr))
- 
- (defn filter-canonical-nucleotides [arr] (filter/filter_canonical_nucleotides arr))
- 
- (defn filter-carbohydrates [arr] (filter/filter_carbohydrates arr))
- 
- (defn filter-chain [arr chain] (= chain (.get_annotation arr "chain_id")))
- 
- (defn filter-element [arr element] (= element (.get_annotation arr "element")))
- 
- (defn filter-first-altloc [arr] (filter/filter_first_altloc arr))
- 
- (defn filter-hetero [arr] (= true (.get_annotation arr "hetero")))
- 
- (defn filter-highest-occupancy-altloc [arr] (filter/filter_highest_occupancy_altloc arr))
- 
- (defn filter-inscode [arr inscode] (= inscode (.get_annotation arr "ins_code")))
- 
- (defn filter-intersection [arr] (filter/filter_intersection arr))
- 
- (defn filter-linear-bond-continuity [arr] (filter/filter_linear_bond_continuity arr))
- 
- (defn filter-monoatomic-ions [arr] (filter/filter_monoatomic_ions arr))
- 
- (defn filter-nucleotides [arr] (filter/filter_nucleotides arr))
- 
- (defn filter-peptide-backbone [arr] (filter/filter_peptide_backbone arr))
- 
- (defn filter-phosphate-backbone [arr] (filter/filter_phosphate_backbone arr))
- 
- (defn filter-polymer [arr] (filter/filter_polymer arr))
- 
- (defn filter-resid [arr num] (= num (.get_annotation arr "res_id")))
- 
- (defn filter-resname [arr res_name] (= res_name (.get_annotation arr "res_name")))
- 
- (defn filter-solvent [arr] (filter/filter_solvent arr))
+;; (defn draw! [arr style-key style-map material]
+;;   "take a collection of states corresponding to frames and generate an output"
+;;   (let [molname (str (gensym))
+;;         [obj _] (molecule/_create_object  arr ** :name molname :style (name style-key))
+;;         _ (bl_nodes/create_starting_node_tree obj ** :style (name style-key))
+;;         modifier (first (filter #(= (.-type %) "NODES") (vec (.-modifiers obj))))
+;;         node-tree (.-node_group modifier)
+;;         nodes (.-nodes node-tree)
+;;         global-styles (merge default-styles style-map)]
+;;     (when-let [style-node (first (filter #(str/includes? (.-name %) "Style") (vec nodes)))]
+;;       (doseq [input (.-inputs style-node)]
+;;         (when (not= (.-type input) "GEOMETRY")
+;;           (let [input-name (.-name input)
+;;                 styles (get global-styles style-key)]
+;;             (doseq [[key value] styles]
+;;               (when (= input-name key)
+;;                 ;; (println input " " key " " value "")
+;;                 (python/setattr input "default_value" value))))))
+;;
+;;            ;; Set the material in the node's Material input
+;;       (when-let [material-input (first (filter #(= (.-name %) "Material") (.. style-node -inputs)))]
+;;         (.. obj -data -materials (append material))
+;;         (set! (.-default_value material-input) material)))))
 
- 
- ;; needed to capture the active view
- (defn- get-temp-context-info []
-   (let [win (.. bpy -context -window)
-         areas3d (let [areas (.. bpy -context -screen -areas)]
-                   (-> (filter #(= (.-type %) "VIEW_3D") areas) first))
-         region (let [region (.-regions areas3d)]
-                  (-> (filter #(= (.-type %) "WINDOW") region) first))]
-     {:window win
-      :area areas3d
-      :region region}))
+(defn draw! [code style material]
+  (let [mol (molecularnodes.Molecule/fetch code)]
+    (.add_style mol ** :style style :material material)))
 
- 
- (defn get-view []
-   (let [ctx (get-temp-context-info)
-         area3d (:area ctx)
-         camera (.. bpy -context -scene -camera)
-         region3d (.. area3d -spaces -active -region_3d)]
-     (when (and area3d region3d camera)
-       (let [view-matrix (.-view_matrix region3d)
-             camera-matrix (.inverted view-matrix)]
-         (set! (.-matrix_world camera) camera-matrix)
-         (let [mat (.-matrix_world camera)]
-           (map vec mat))))))
 
+(defn filter-amino-acids [arr] (filter/filter_amino_acids arr))
+
+(defn filter-atomname [arr atomname] (= atomname (.get_annotation arr "atom_name")))
+
+(defn filter-canonical-amino-acids [arr] (filter/filter_canonical_amino_acids arr))
+
+(defn filter-canonical-nucleotides [arr] (filter/filter_canonical_nucleotides arr))
+
+(defn filter-carbohydrates [arr] (filter/filter_carbohydrates arr))
+
+(defn filter-chain [arr chain] (= chain (.get_annotation arr "chain_id")))
+
+(defn filter-element [arr element] (= element (.get_annotation arr "element")))
+
+(defn filter-first-altloc [arr] (filter/filter_first_altloc arr))
+
+(defn filter-hetero [arr] (= true (.get_annotation arr "hetero")))
+
+(defn filter-highest-occupancy-altloc [arr] (filter/filter_highest_occupancy_altloc arr))
+
+(defn filter-inscode [arr inscode] (= inscode (.get_annotation arr "ins_code")))
+
+(defn filter-intersection [arr] (filter/filter_intersection arr))
+
+(defn filter-linear-bond-continuity [arr] (filter/filter_linear_bond_continuity arr))
+
+(defn filter-monoatomic-ions [arr] (filter/filter_monoatomic_ions arr))
+
+(defn filter-nucleotides [arr] (filter/filter_nucleotides arr))
+
+(defn filter-peptide-backbone [arr] (filter/filter_peptide_backbone arr))
+
+(defn filter-phosphate-backbone [arr] (filter/filter_phosphate_backbone arr))
+
+(defn filter-polymer [arr] (filter/filter_polymer arr))
+
+(defn filter-resid [arr num] (= num (.get_annotation arr "res_id")))
+
+(defn filter-resname [arr res_name] (= res_name (.get_annotation arr "res_name")))
+
+(defn filter-solvent [arr] (filter/filter_solvent arr))
+
+;; needed to capture the active view
+(defn- get-temp-context-info []
+  (let [win (.. bpy -context -window)
+        areas3d (let [areas (.. bpy -context -screen -areas)]
+                  (-> (filter #(= (.-type %) "VIEW_3D") areas) first))
+        region (let [region (.-regions areas3d)]
+                 (-> (filter #(= (.-type %) "WINDOW") region) first))]
+    {:window win
+     :area areas3d
+     :region region}))
+
+(defn get-view []
+  (let [ctx (get-temp-context-info)
+        area3d (:area ctx)
+        camera (.. bpy -context -scene -camera)
+        region3d (.. area3d -spaces -active -region_3d)]
+    (when (and area3d region3d camera)
+      (let [view-matrix (.-view_matrix region3d)
+            camera-matrix (.inverted view-matrix)]
+        (set! (.-matrix_world camera) camera-matrix)
+        (let [mat (.-matrix_world camera)]
+          (map vec mat))))))
 
 ;; core loading function. used molnodes code + biotite bond connections.
- (defn load-pdb [code]
-   ^struct/AtomArray
-   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first) ]
-     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
-     (center-array arr)))
+;; (defn load-pdb [code]
+;;   ^struct/AtomArray
+;;   (let [arr (-> code download/download pdbx.CIFFile/read pdbx/get_structure seq first)]
+;;     (set! (.-bonds arr) (bonds/connect_via_residue_names arr))
+;;     (center-array arr)))
+
+(defn load-pdb [code] 
+  (let [mol  (molecularnodes.Molecule/fetch code) 
+        arr (.array mol)]  
+    arr))
+  
+
+(defn set-view! [matrix]
+  (let [mmat (mathutils/Matrix (vec matrix))
+        ctx (get-temp-context-info)
+        area3d (:area ctx)
+        camera (.. bpy -context -scene -camera)
+        region3d (.. area3d -spaces -active -region_3d)]
+    (when (and area3d region3d camera)
+      (set! (.. bpy -context -scene -camera -matrix_world) mmat)
+      (set! (.-view_matrix region3d) (.inverted mmat)))))
+
+(comment
+
+  (let [mol (mn.Molecule/fetch "1cbs")]
+    (.add_style mol "cartoon"))
+
+  (let [mol (mn.Molecule/load "/Users/zcpowers/MolecularNodesCache/4ozs.pdb")]
+    (.add_style mol "cartoon"))
+
+  
+  (let [mol (mn.Molecule/load "/Users/zcpowers/MolecularNodesCache/4ozs.pdb")
+        mat_squish (mn.material/Squishy)
+        mol_style (styles/cartoon {})]
+    (.add_style mol ** :style mol_style))
 
 
- (defn set-view! [matrix]
-   (let [mmat (mathutils/Matrix (vec matrix))
-         ctx (get-temp-context-info)
-         area3d (:area ctx)
-         camera (.. bpy -context -scene -camera)
-         region3d (.. area3d -spaces -active -region_3d)]
-     (when (and area3d region3d camera)
-       (set! (.. bpy -context -scene -camera -matrix_world) mmat)
-       (set! (.-view_matrix region3d) (.inverted mmat)))))
+  ;; ribbon is broken for now. not sure why. 
+  (let [code "1cbs"
+        styl (styles/cartoon {})
+        mat (materials/create-material :name "test")
+        mol (mn.Molecule/fetch code)] 
+    (println styl) 
+    (println (type styl))
+    (println (dir styl))
+    (println mat) 
+    (.add_style mol ** :style styl :material mat)
+    )
+  
+  (defn draw! [code style material]
+    (let [mol (mn.Molecule/fetch code)]
+      (.add_style mol ** :style style :material material)))
 
 
- (comment
+  
+  ;; global setup to write outputs to a file
+  (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
+  (set! (.. bpy -context -scene -render -filepath) "render.png")
 
-   ;; global setup to write outputs to a file
-   (set! (.. bpy -context -scene -render -image_settings -file_format) "PNG")
-   (set! (.. bpy -context -scene -render -filepath) "render.png")
+  ;; Example 01
+  ;; lets display Rapamycin
 
-   ;; Example 01
-   ;; lets display Rapamycin 
+  (let [;; styles for materials
+        surface_params {"Emission Strength" 0.5
+                        "Alpha" 0.25}
+        cartoon_params {;"Base Color" [1 0 0 1]
+                        "Emission Strength" 0.0
+                        "Alpha" 0.5}
+        sticks_params {"Base Color" [0.15 1 0.15 1]
+                       "Emission Strength" 3
+                       "Emission Color" [0.15 1 0.15 1]}
 
-   (let [;; styles for materials
-         surface_params {"Emission Strength" 0.5
-                         "Alpha" 0.25}
-         cartoon_params {;"Base Color" [1 0 0 1]
-                         "Emission Strength" 0.0
-                         "Alpha" 0.5}
-         sticks_params {"Base Color" [0.15 1 0.15 1]
-                        "Emission Strength" 3
-                        "Emission Color" [0.15 1 0.15 1]}
-
-        ;; styles for components 
-         style_overrides  {:ball+stick  {"Quality" 2
-                                         "As Mesh" true
-                                         "Sphere Radii" 0.4
-                                         "Bond Split" false
-                                         "Bond Find" false
-                                         "Bond Radius" 0.4
-                                         "Color Blur" false
-                                         "Shade Smooth" true}
-                           :cartoon {;"DSSP" true
-                                     "Loop Radius" 1.1}}
+        ;; styles for components
+        style_overrides  {:ball+stick  {"Quality" 2
+                                        "As Mesh" true
+                                        "Sphere Radii" 0.4
+                                        "Bond Split" false
+                                        "Bond Find" false
+                                        "Bond Radius" 0.4
+                                        "Color Blur" false
+                                        "Shade Smooth" true}
+                          :cartoon {;"DSSP" true
+                                    "Loop Radius" 1.1}}
 
         ;; camera location/view
-         view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
-                 [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
-                 [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
-                 [-0.0 0.0 -0.0 1.0]]
+        view   [[0.28517988324165344 0.384846031665802 -0.877818763256073 -1.7708362340927124]
+                [-0.958473801612854 0.11450467258691788 -0.2611822485923767 -0.5268866419792175]
+                [-7.748600978629838e-07 0.9158504009246826 0.4015194773674011 0.8099910020828247]
+                [-0.0 0.0 -0.0 1.0]]
 
-         surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
-         cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
-         sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
+        ;; surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+        ;; cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+        ;; sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
 
-         arr  (load-pdb "1fap")
-         ligand (filter-resname arr "RAP")
-         struct_lig (aget arr ligand)]
+        arr  (load-pdb "1fap")
+        ligand (filter-resname arr "RAP")
+        struct_lig (aget arr ligand)]
 
-     ;; draw and position
-     (draw! arr :cartoon style_overrides  cartoon_material)
-     (draw! struct_lig :ball+stick style_overrides sticks_material)
-     (draw! arr :surface {} surface_material)
-     (set-view! view)
-     (bpy.ops.render/render ** :use_viewport true  :write_still true))
+    ;; draw and position
+    ;; (draw! arr :cartoon style_overrides  cartoon_material)
+    ;; (draw! struct_lig :ball+stick style_overrides sticks_material)
+    ;; (draw! arr :surface {} surface_material)
+    (set-view! view)
+    (bpy.ops.render/render ** :use_viewport true  :write_still true))
 
-   (clear-objects)
+  (clear-objects)
 
+  ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
+  ;;      proteins (core/filter-polymer hemoglobin)
+  ;;      ligand (core/filter-resname hemoglobin "RAP")
+  ;;      struct (aget hemoglobin proteins)
+  ;;      struct_lig (aget hemoglobin ligand)
+  ;;      matname (str (gensym))
+  ;;      material (.. bpy -data -materials (new matname))
+  ;;      matname1 (str (gensym))
+  ;;      material_ligand (.. bpy -data -materials (new matname1))]
+  ;;  (set! (.-diffuse_color material) [1 0 0 1])
+  ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
+  ;;  (render-atomarray struct "cartoon" material)
+  ;;  (render-atomarray struct_lig "surface" material_ligand))
+  ;;  (clear-objects)
 
-    ;;  (let [hemoglobin (first (seq (core/load-pdb "1FAP")))
-    ;;      proteins (core/filter-polymer hemoglobin)
-    ;;      ligand (core/filter-resname hemoglobin "RAP")
-    ;;      struct (aget hemoglobin proteins)
-    ;;      struct_lig (aget hemoglobin ligand)
-    ;;      matname (str (gensym))
-    ;;      material (.. bpy -data -materials (new matname))
-    ;;      matname1 (str (gensym))
-    ;;      material_ligand (.. bpy -data -materials (new matname1))]
-    ;;  (set! (.-diffuse_color material) [1 0 0 1])
-    ;;  (set! (.-diffuse_color material_ligand) [4 0 0 1])
-    ;;  (render-atomarray struct "cartoon" material)
-    ;;  (render-atomarray struct_lig "surface" material_ligand)) 
-    ;;  (clear-objects)
+  ;; setup blender
+  ;; https://www.blendernation.com/2024/07/20/where-has-bloom-gone-in-blender-4-2/
+  ;; use composigint and add nocdes:
+  ;; add a node between render layers adn composite
+  ;; set the compositiing type to Bloom
 
+  ;; Vancomycin: 1fvm
+  ;; Semaglutide
 
-   ;; setup blender
-   ;; https://www.blendernation.com/2024/07/20/where-has-bloom-gone-in-blender-4-2/
-   ;; use composigint and add nocdes:
-   ;; add a node between render layers adn composite
-   ;; set the compositiing type to Bloom
+  (let [;; styles for materials
+        surface_params {"Emission Strength" 0.5
+                        "Alpha" 0.25}
+        cartoon_params {;"Base Color" [1 0 0 1]
+                        "Emission Strength" 0.0
+                        "Alpha" 0.8}
+        sticks_params {"Base Color" [0.15 1 0.15 1]
+                       "Emission Strength" 3
+                       "Emission Color" [0.15 1 0.15 1]}
 
-   
-   ;; Vancomycin: 1fvm
-   ;; Semaglutide
+        ;; styles for components
+        style_overrides  {:ball+stick  {"Quality" 2
+                                        "As Mesh" true
+                                        "Sphere Radii" 0.4
+                                        "Bond Split" false
+                                        "Bond Find" false
+                                        "Bond Radius" 0.4
+                                        "Color Blur" false
+                                        "Shade Smooth" true}
+                          :cartoon {"DSSP" true
+                                    "Loop Radius" 1.0}}
 
+        ;; camera location/view
+        view   [[0.2486901730298996 0.24742034077644348 -0.9364489316940308 -1.804543137550354]
+                [-0.9685831069946289 0.06352568417787552 -0.24043984711170197 -0.3880183696746826]
+                [-1.0803344139276305e-06 0.9668235778808594 0.25544533133506775 0.5141353011131287]
+                [-0.0 0.0 -0.0 1.0]]
 
-   
+        ;; surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
+        ;; cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
+        ;; sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
 
+        arr  (load-pdb "7xbu")
+        ligand (filter-resname arr "MYN")
+        struct_lig (aget arr ligand)]
 
-   (let [;; styles for materials
-          surface_params {"Emission Strength" 0.5
-                          "Alpha" 0.25}
-          cartoon_params {;"Base Color" [1 0 0 1]
-                          "Emission Strength" 0.0
-                          "Alpha" 0.8}
-          sticks_params {"Base Color" [0.15 1 0.15 1]
-                         "Emission Strength" 3
-                         "Emission Color" [0.15 1 0.15 1]}
-   
-           ;; styles for components 
-          style_overrides  {:ball+stick  {"Quality" 2
-                                          "As Mesh" true
-                                          "Sphere Radii" 0.4
-                                          "Bond Split" false
-                                          "Bond Find" false
-                                          "Bond Radius" 0.4
-                                          "Color Blur" false
-                                          "Shade Smooth" true}
-                            :cartoon {"DSSP" true
-                                      "Loop Radius" 1.0}}
-   
-           ;; camera location/view
-          view   [[0.2486901730298996 0.24742034077644348 -0.9364489316940308 -1.804543137550354]
-                   [-0.9685831069946289 0.06352568417787552 -0.24043984711170197 -0.3880183696746826] 
-                   [-1.0803344139276305e-06 0.9668235778808594 0.25544533133506775 0.5141353011131287] 
-                   [-0.0 0.0 -0.0 1.0]]
-   
-          surface_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults surface_params))
-          cartoon_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults cartoon_params))
-          sticks_material (create-basic-material (str (gensym)) (merge bsdf-principled-defaults sticks_params))
-   
-          arr  (load-pdb "7xbu")
-          ligand (filter-resname arr "MYN")
-          struct_lig (aget arr ligand)]
-   
-        ;; draw and position
-      (draw! arr :cartoon style_overrides  cartoon_material)
-      (draw! struct_lig :ball+stick style_overrides sticks_material)
-      ;; (draw! arr :surface {} surface_material)
-      (set-view! view)
-      (bpy.ops.render/render ** :use_viewport true  :write_still true))
+    ;; draw and position
+    ;; (draw! arr :cartoon style_overrides  cartoon_material)
+    ;; (draw! struct_lig :ball+stick style_overrides sticks_material)
+    ;; (draw! arr :surface {} surface_material)
+    (set-view! view)
+    (bpy.ops.render/render ** :use_viewport true  :write_still true))
 
-   (clear-objects)
-   (set-view! (get-view))
-   (println (get-view))
-   
-   )
-   
+  (clear-objects)
+  (set-view! (get-view))
+  (println (get-view))
+  )

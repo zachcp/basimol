@@ -1,0 +1,115 @@
+(ns basimol.materials
+  (:import [molecularnodes.nodes.material :as material])
+  (:require [basilisp.core :as core]))
+
+(defn create-material
+  "Create a Blender material from provided shader properties.
+
+   Accepts keyword arguments that map to the Python create_material function parameters:
+
+   :name - Material name (string, optional)
+   :base-color - Base color as [r g b a] vector (default [0.8 0.8 0.8 0.05])
+   :metallic - Metallic value (default 0.0)
+   :roughness - Roughness value (default 0.2)
+   :ior - Index of refraction (default 1.45)
+   :alpha - Alpha transparency (default 1.0)
+   :normal - Normal vector [x y z] (default [0.0 0.0 0.0])
+   :weight - Weight value (default 0.0)
+   :diffuse-roughness - Diffuse roughness (default 0.0)
+   :subsurface-weight - Subsurface weight (default 0.0)
+   :subsurface-radius - Subsurface radius [r g b] (default [1.0 0.2 0.1])
+   :subsurface-scale - Subsurface scale (default 0.05)
+   :subsurface-ior - Subsurface IOR (default 1.4)
+   :subsurface-anisotropy - Subsurface anisotropy (default 0.0)
+   :specular-ior-level - Specular IOR level (default 0.5)
+   :specular-tint - Specular tint [r g b a] (default [1.0 1.0 1.0 1.0])
+   :anisotropic - Anisotropic value (default 0.0)
+   :anisotropic-rotation - Anisotropic rotation (default 0.0)
+   :tangent - Tangent vector [x y z] (default [0.0 0.0 0.0])
+   :transmission-weight - Transmission weight (default 0.0)
+   :coat-weight - Coat weight (default 0.0)
+   :coat-roughness - Coat roughness (default 0.03)
+   :coat-ior - Coat IOR (default 1.5)
+   :coat-tint - Coat tint [r g b a] (default [1.0 1.0 1.0 1.0])
+   :coat-normal - Coat normal [x y z] (default [0.0 0.0 0.0])
+   :sheen-weight - Sheen weight (default 0.0)
+   :sheen-roughness - Sheen roughness (default 0.5)
+   :sheen-tint - Sheen tint [r g b a] (default [0.5 0.5 0.5 1.0])
+   :emission-color - Emission color [r g b a] (default [0.0 0.0 0.0 1.0])
+   :emission-strength - Emission strength (default 0.0)
+   :thin-film-thickness - Thin film thickness (default 0.0)
+   :thin-film-ior - Thin film IOR (default 1.3)
+
+   Returns a bpy.types.Material object."
+  [& {:keys [name base-color metallic roughness ior alpha normal weight
+             diffuse-roughness subsurface-weight subsurface-radius
+             subsurface-scale subsurface-ior subsurface-anisotropy
+             specular-ior-level specular-tint anisotropic anisotropic-rotation
+             tangent transmission-weight coat-weight coat-roughness coat-ior
+             coat-tint coat-normal sheen-weight sheen-roughness sheen-tint
+             emission-color emission-strength thin-film-thickness thin-film-ior]
+      :or {base-color [0.8 0.8 0.8 0.05]
+           metallic 0.0
+           roughness 0.2
+           ior 1.45
+           alpha 1.0
+           normal [0.0 0.0 0.0]
+           weight 0.0
+           diffuse-roughness 0.0
+           subsurface-weight 0.0
+           subsurface-radius [1.0 0.2 0.1]
+           subsurface-scale 0.05
+           subsurface-ior 1.4
+           subsurface-anisotropy 0.0
+           specular-ior-level 0.5
+           specular-tint [1.0 1.0 1.0 1.0]
+           anisotropic 0.0
+           anisotropic-rotation 0.0
+           tangent [0.0 0.0 0.0]
+           transmission-weight 0.0
+           coat-weight 0.0
+           coat-roughness 0.03
+           coat-ior 1.5
+           coat-tint [1.0 1.0 1.0 1.0]
+           coat-normal [0.0 0.0 0.0]
+           sheen-weight 0.0
+           sheen-roughness 0.5
+           sheen-tint [0.5 0.5 0.5 1.0]
+           emission-color [0.0 0.0 0.0 1.0]
+           emission-strength 0.0
+           thin-film-thickness 0.0
+           thin-film-ior 1.3}}]
+  (material/create_material
+   **
+   :name name
+   :base_color base-color
+   :metallic metallic
+   :roughness roughness
+   :ior ior
+   :alpha alpha
+   :normal normal
+   :weight weight
+   :diffuse_roughness diffuse-roughness
+   :subsurface_weight subsurface-weight
+   :subsurface_radius subsurface-radius
+   :subsurface_scale subsurface-scale
+   :subsurface_ior subsurface-ior
+   :subsurface_anisotropy subsurface-anisotropy
+   :specular_ior_level specular-ior-level
+   :specular_tint specular-tint
+   :anisotropic anisotropic
+   :anisotropic_rotation anisotropic-rotation
+   :tangent tangent
+   :transmission_weight transmission-weight
+   :coat_weight coat-weight
+   :coat_roughness coat-roughness
+   :coat_ior coat-ior
+   :coat_tint coat-tint
+   :coat_normal coat-normal
+   :sheen_weight sheen-weight
+   :sheen_roughness sheen-roughness
+   :sheen_tint sheen-tint
+   :emission_color emission-color
+   :emission_strength emission-strength
+   :thin_film_thickness thin-film-thickness
+   :thin_film_ior thin-film-ior))

@@ -1,87 +1,193 @@
-(ns basimol.styles)
+(ns basimol.styles
+  (:import [molecularnodes.nodes.styles :as styles])
+  (:require [basilisp.string :as string]))
 
-(def default-styles
-  {:ball+stick
-   {"Quality" 2
-    "As Mesh" true
-    "Sphere Radii" 0.3
-    "Bond Split" false
-    "Bond Find" false
-    "Bond Radius" 0.3
-    "Color Blur" false
-    "Shade Smooth" true}
-   :cartoon
-   {"Quality" 2
-    "DSSP" false
-    "Cylinders" false
-    "Arrows" true
-    "Rounded" false
-    "Thickness" 0.6
-    "Width" 2.2
-    "Loop Radius" 0.3
-    "Smoothing" 0.5
-    "Color Blur" false
-    "Shade Smooth" true}
-   :ribbon
-   {"Quality" 3
-    "Radius" 1.6
-    "Smoothing" 0.6
-    "Color Blur" false
-    "Shade Smooth" false}
-   :spheres
-   {"As Mesh" true
-    "Radii" 0.8
-    "Subdivisions" 2
-    "Shade Smooth" false}
-   :sticks
-   {"Quality" 2
-    "Radius" 0.2
-    "Color Blur" false
-    "Shade Smooth" false}
-   :surface
-   {"Quality" 3
-    "Separate" true
-    "Attribute" "chain_id"
-    "Scale Radii" 1.5
-    "Probe Size" 1.0
-    "Triangulate" false
-    "Relaxation Steps" 10
-    "by CA" false
-    "Blur" 2
-    "Shade Smooth" true}})
- 
- 
+;; (defn kebab->snake [s] (string/replace (name s) #"-" "_"))
 
- 
-(def bsdf-principled-defaults
-  {"Base Color" [0.8 0.8 0.8 1.0]
-   "Metallic" 0.0
-   "Roughness" 0.2085610330104828
-   "IOR" 1.4500000476837158
-   "Alpha" 1.0
-   "Normal" [0.0 0.0 0.0]
-   "Weight" 0.0
-   "Diffuse Roughness" 0.0
-   "Subsurface Weight" 0.0
-   "Subsurface Radius" [1.0 0.2 0.1]
-   "Subsurface Scale" 0.05000000074505806
-   "Subsurface IOR" 1.399999976158142
-   "Subsurface Anisotropy" 0.0
-   "Specular IOR Level" 0.5
-   "Specular Tint" [1.0 1.0 1.0 1.0]
-   "Anisotropic" 0.0
-   "Anisotropic Rotation" 0.0
-   "Tangent" [0.0 0.0 0.0]
-   "Transmission Weight" 0.0
-   "Coat Weight" 0.0
-   "Coat Roughness" 0.029999999329447746
-   "Coat IOR" 1.5
-   "Coat Tint" [1.0 1.0 1.0 1.0]
-   "Coat Normal" [0.0 0.0 0.0]
-   "Sheen Weight" 0.0
-   "Sheen Roughness" 0.5
-   "Sheen Tint" [0.5 0.5 0.5 1.0]
-   "Emission Color" [0.0 0.0 0.0 1.0]
-   "Emission Strength" 0.0
-   "Thin Film Thickness" 0.0
-   "Thin Film IOR" 1.3300000429153442})
+;; (defn- merge-and-snake-case [defaults opts]
+;;   (->> (merge defaults opts)
+;;        (map (fn [[k v]] [(kebab->snake k) v]))
+;;        (into {})))
+
+(defn ribbon [& {:keys [quality
+                        color-blur
+                        shade-smooth
+                        backbone-smoothing
+                        backbone-threshold
+                        base-scale
+                        backbone-radius
+                        backbone-shape
+                        base-resolution
+                        base-realize
+                        uv-map
+                        u-component]
+                 :or {quality 3
+                      color-blur false
+                      shade-smooth false
+                      backbone-smoothing 0.5
+                      backbone-threshold 4.5
+                      base-scale [2.5 0.5 7.0]
+                      backbone-radius 2.0
+                      backbone-shape "Cylinder"
+                      base-resolution 4
+                      base-realize false
+                      uv-map false
+                      u-component nil}}]
+  (styles/StyleRibbon
+   **
+   :quality quality
+   :color_blur color-blur
+   :shade_smooth shade-smooth
+   :backbone_smoothing backbone-smoothing
+   :backbone_threshold backbone-threshold
+   :base_scale base-scale
+   :backbone_radius backbone-radius
+   :backbone_shape backbone-shape
+   :base_resolution base-resolution
+   :base_realize base-realize
+   :uv_map uv-map
+   :u_component u-component))
+
+(defn cartoon [& {:keys [quality
+                         dssp
+                         cylinders
+                         arrows
+                         rounded
+                         thickness
+                         width
+                         loop-radius
+                         smoothing
+                         backbone-shape
+                         backbone-radius
+                         base-shape
+                         base-realize
+                         color-blur
+                         shade-smooth]
+                  :or {quality 2
+                       dssp false
+                       cylinders false
+                       arrows true
+                       rounded false
+                       thickness 0.6
+                       width 2.2
+                       loop-radius 0.3
+                       smoothing 0.5
+                       backbone-shape "Cylinder"
+                       backbone-radius 2.0
+                       base-shape "Rectangle"
+                       base-realize false
+                       color-blur true
+                       shade-smooth true}}]
+  (styles/StyleCartoon
+   **
+   :quality quality
+   :dssp dssp
+   :cylinders cylinders
+   :arrows arrows
+   :rounded rounded
+   :thickness thickness
+   :width width
+   :loop_radius loop-radius
+   :smoothing smoothing
+   :backbone_shape backbone-shape
+   :backbone_radius backbone-radius
+   :base_shape base-shape
+   :base_realize base-realize
+   :color_blur color-blur
+   :shade_smooth shade-smooth))
+
+(defn ball-and-stick [& {:keys [quality
+                                geometry
+                                sphere-radii
+                                bond-split
+                                bond-find
+                                bond-radius
+                                color-blur
+                                shade-smooth]
+                         :or {quality 2
+                              geometry "Instance"
+                              sphere-radii 0.3
+                              bond-split false
+                              bond-find false
+                              bond-radius 0.3
+                              color-blur false
+                              shade-smooth true}}]
+  (styles/StyleBallandStick
+   **
+   :quality quality
+   :geometry geometry
+   :sphere_radii sphere-radii
+   :bond_split bond-split
+   :bond_find bond-find
+   :bond_radius bond-radius
+   :color_blur color-blur
+   :shade_smooth shade-smooth))
+
+(defn spheres [& {:keys [geometry
+                         radii
+                         sphere-subdivisions
+                         shade-smooth]
+                  :or {geometry "Point"
+                       radii 0.8
+                       sphere-subdivisions 2
+                       shade-smooth true}}]
+  (styles/StyleSpheres
+   **
+   :geometry geometry
+   :radii radii
+   :sphere_subdivisions sphere-subdivisions
+   :shade_smooth shade-smooth))
+
+(defn sticks [& {:keys [quality
+                        radius
+                        color-blur
+                        shade-smooth]
+                 :or {quality 3
+                      radius 0.2
+                      color-blur false
+                      shade-smooth true}}]
+  (styles/StyleSticks
+   **
+   :quality quality
+   :radius radius
+   :color_blur color-blur
+   :shade_smooth shade-smooth))
+
+(defn surface [& {:keys [quality
+                         scale-radii
+                         probe-size
+                         relaxation-steps
+                         separate
+                         group-id
+                         color-source
+                         blur
+                         shade-smooth]
+                  :or {quality 3
+                       scale-radii 1.5
+                       probe-size 1.0
+                       relaxation-steps 10
+                       separate "chain_id"
+                       group-id 0
+                       color-source "Alpha Carbon"
+                       blur 2
+                       shade-smooth true}}]
+  (styles/StyleSurface
+   **
+   :quality quality
+   :scale_radii scale-radii
+   :probe_size probe-size
+   :relaxation_steps relaxation-steps
+   :separate separate
+   :group_id group-id
+   :color_source color-source
+   :blur blur
+   :shade_smooth shade-smooth))
+
+(comment
+
+  (ribbon {})
+
+  (let [ribbon-obj (ribbon {})
+        attrs (dir ribbon-obj)]
+    (doseq [att attrs]
+      (println att (python/getattr ribbon-obj att)))))
