@@ -1,5 +1,6 @@
 (ns basimol.materials
-  (:import [molecularnodes.nodes.material :as material]))
+  (:import [molecularnodes.nodes.material :as material])
+  (:require [basilisp.core :as core]))
 
 (defn create-material
   "Create a Blender material from provided shader properties.
